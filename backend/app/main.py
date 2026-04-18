@@ -1,0 +1,64 @@
+from fastapi import FastAPI
+from .database import engine
+from .models import (
+    user,
+    item,
+    category,
+    stock_movement,
+    alert,  # Import Alert model
+    payment,  # Import Payment model
+    purchase,  # Import Purchase model
+    installment_payment,  # Import InstallmentPayment model
+)  # Import models to create tables
+from .routers import (
+    auth,
+    items,
+    categories,
+    stock,
+    scanning,
+    alerts,
+    payments,
+    purchases,
+    installment_payments,
+)  # Import alerts and payments routers
+from .middleware.cors import create_cors_middleware
+
+# Create tables
+user.Base.metadata.create_all(bind=engine)
+# Also create tables for other models
+item.Base.metadata.create_all(bind=engine)
+category.Base.metadata.create_all(bind=engine)
+stock_movement.Base.metadata.create_all(bind=engine)
+alert.Base.metadata.create_all(bind=engine)
+payment.Base.metadata.create_all(bind=engine)
+purchase.Base.metadata.create_all(bind=engine)
+installment_payment.Base.metadata.create_all(bind=engine)
+
+app = FastAPI(title="Inventory Management API")
+
+# Add CORS middleware
+create_cors_middleware(app)
+
+# Include routers
+app.include_router(auth.router, prefix="/auth", tags=["auth"])
+app.include_router(items.router, prefix="/items", tags=["items"])
+app.include_router(categories.router, prefix="/categories", tags=["categories"])
+app.include_router(stock.router, prefix="/stock", tags=["stock"])
+app.include_router(scanning.router, prefix="/scanning", tags=["scanning"])
+app.include_router(
+    alerts.router, prefix="/alerts", tags=["alerts"]
+)  # Include alerts router
+app.include_router(
+    payments.router, prefix="/payments", tags=["payments"]
+)  # Include payments router
+app.include_router(
+    purchases.router, prefix="/purchases", tags=["purchases"]
+)  # Include purchases router
+app.include_router(
+    installment_payments.router, prefix="/installment-payments", tags=["installment-payments"]
+)  # Include installment payments router
+
+
+@app.get("/")
+def read_root():
+    return {"message": "Welcome to Inventory Management API"}

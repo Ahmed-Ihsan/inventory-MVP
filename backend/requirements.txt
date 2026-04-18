@@ -1,0 +1,12 @@
+fastapi==0.95.2
+uvicorn
+sqlalchemy
+alembic
+pydantic==1.10.15
+PyJWT
+passlib
+pyzbar
+pytest
+python-multipart
+faker</content>
+<parameter name="filePath">backend/app/populate_db.py
