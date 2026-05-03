@@ -106,17 +106,35 @@ const ItemList = () => {
             columns={columns.map(col => ({
               ...col,
               header: (
-                <span
-                  style={{ cursor: 'pointer', userSelect: 'none' }}
+                <button
+                  style={{
+                    cursor: 'pointer',
+                    userSelect: 'none',
+                    fontWeight: 'bold',
+                    background: 'transparent',
+                    border: 'none',
+                    padding: '0.5rem 0.75rem',
+                    borderRadius: '8px',
+                    fontSize: '0.95rem',
+                    color: 'var(--color-text)',
+                    transition: 'all 0.2s ease',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                  }}
                   onClick={() => col.sortable && handleSort(col.accessor)}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'var(--color-surface)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'transparent';
+                  }}
                 >
                   {col.header}
                   {sortBy === col.accessor && (
-                    <span style={{ marginRight: '0.5rem' }}>
-                      {sortOrder === 'asc' ? '↑' : '↓'}
-                    </span>
+                    sortOrder === 'asc' ? '↑' : '↓'
                   )}
-                </span>
+                </button>
               ),
             }))}
             data={paginatedItems}

@@ -1,81 +1,88 @@
 import React from 'react';
-import { useLocation } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { 
-  FaChartPie, 
-  FaMoneyBillWave, 
-  FaShoppingCart, 
-  FaBoxes, 
-  FaTags, 
-  FaWarehouse, 
-  FaBarcode 
+import {
+  FaChartPie,
+  FaMoneyBillWave,
+  FaShoppingCart,
+  FaReceipt,
+  FaBolt,
+  FaBoxes,
+  FaTags,
+  FaWarehouse,
+  FaBarcode,
+  FaCalendarAlt,
 } from 'react-icons/fa';
+
+const NAV_GROUPS = [
+  {
+    label: 'الرئيسية',
+    items: [
+      { path: '/',          label: 'لوحة التحكم',  icon: FaChartPie,      color: '#00b4d8', exact: true },
+    ],
+  },
+  {
+    label: 'المالية',
+    items: [
+      { path: '/installment-sales/list', label: 'بيع بالأقساط', icon: FaCalendarAlt,    color: '#667eea' },
+      { path: '/payments',        label: 'المدفوعات',      icon: FaMoneyBillWave, color: '#2ecc71' },
+      { path: '/purchases',       label: 'المشتريات',      icon: FaShoppingCart,  color: '#f39c12' },
+      { path: '/sales-invoice',  label: 'فاتورة بيع',     icon: FaReceipt,       color: '#9b59b6' },
+    ],
+  },
+  {
+    label: 'المخزون',
+    items: [
+      { path: '/items',     label: 'كتالوج الأصناف', icon: FaBoxes,       color: '#9b59b6' },
+      { path: '/categories',label: 'الفئات',        icon: FaTags,          color: '#e74c3c' },
+      { path: '/stock',     label: 'تتبع المخزون',  icon: FaWarehouse,     color: '#1abc9c' },
+      { path: '/scan',      label: 'المسح الضوئي',  icon: FaBarcode,       color: '#3498db' },
+    ],
+  },
+];
 
 const Sidebar = () => {
   const { t } = useTranslation();
   const location = useLocation();
 
-  const navItems = [
-    { path: '/', label: t('nav.dashboard'), icon: <FaChartPie /> },
-    { path: '/payments', label: t('nav.payments'), icon: <FaMoneyBillWave /> },
-    { path: '/purchases', label: t('nav.purchases'), icon: <FaShoppingCart /> },
-    { path: '/items', label: t('items.catalog'), icon: <FaBoxes /> },
-    { path: '/categories', label: t('nav.categories'), icon: <FaTags /> },
-    { path: '/stock', label: t('stock.tracking'), icon: <FaWarehouse /> },
-    { path: '/scan', label: t('scanning.title'), icon: <FaBarcode /> },
-  ];
-
-  const isActive = (path) => {
-    if (path === '/') return location.pathname === '/';
+  const isActive = (path, exact) => {
+    if (exact) return location.pathname === path;
     return location.pathname.startsWith(path);
   };
 
   return (
     <aside className="sidebar">
-      <div style={{ 
-        padding: '0 0.5rem',
-        marginBottom: '0.5rem',
-      }}>
-        <span style={{
-          fontSize: '0.6875rem',
-          fontWeight: '600',
-          textTransform: 'uppercase',
-          letterSpacing: '0.08em',
-          color: 'var(--color-text-muted)',
-          padding: '0 0.75rem',
-        }}>
-          {t('nav.dashboard')}
-        </span>
-      </div>
-      <nav>
-        <ul>
-          {navItems.map((item) => (
-            <li key={item.path}>
-              <a 
-                href={item.path} 
-                className={isActive(item.path) ? 'active' : ''}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.75rem',
-                }}
-              >
-                <span style={{ 
-                  fontSize: '1rem', 
-                  opacity: isActive(item.path) ? 1 : 0.7,
-                  transition: 'opacity 0.2s',
-                  display: 'flex',
-                  alignItems: 'center',
-                  flexShrink: 0,
-                }}>
-                  {item.icon}
-                </span>
-                <span>{item.label}</span>
-              </a>
-            </li>
-          ))}
-        </ul>
-      </nav>
+      {NAV_GROUPS.map((group) => (
+        <div key={group.label} className="sidebar-group">
+          <span className="sidebar-group-label">{group.label}</span>
+          <ul>
+            {group.items.map(({ path, label, icon: Icon, color, exact }) => {
+              const active = isActive(path, exact);
+              return (
+                <li key={path}>
+                  <NavLink
+                    to={path}
+                    className={active ? 'active' : ''}
+                    title={label}
+                    style={{ '--item-color': color }}
+                  >
+                    <span
+                      className="sidebar-icon"
+                      style={active
+                        ? { background: color + '20', color }
+                        : {}}
+                    >
+                      <Icon />
+                    </span>
+                    <span className="sidebar-label">{label}</span>
+                    {active && <span className="sidebar-active-dot" />}
+                  </NavLink>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ))}
     </aside>
   );
 };

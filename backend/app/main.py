@@ -5,11 +5,13 @@ from .models import (
     item,
     category,
     stock_movement,
-    alert,  # Import Alert model
-    payment,  # Import Payment model
-    purchase,  # Import Purchase model
-    installment_payment,  # Import InstallmentPayment model
-)  # Import models to create tables
+    alert,
+    payment,
+    purchase,
+    installment_payment,
+    sales_invoice,
+    installment_sales,
+)
 from .routers import (
     auth,
     items,
@@ -20,7 +22,9 @@ from .routers import (
     payments,
     purchases,
     installment_payments,
-)  # Import alerts and payments routers
+    sales_invoices,
+    installment_sales as installment_sales_router,
+)
 from .middleware.cors import create_cors_middleware
 
 # Create tables
@@ -33,6 +37,8 @@ alert.Base.metadata.create_all(bind=engine)
 payment.Base.metadata.create_all(bind=engine)
 purchase.Base.metadata.create_all(bind=engine)
 installment_payment.Base.metadata.create_all(bind=engine)
+sales_invoice.Base.metadata.create_all(bind=engine)
+installment_sales.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Inventory Management API")
 
@@ -56,7 +62,13 @@ app.include_router(
 )  # Include purchases router
 app.include_router(
     installment_payments.router, prefix="/installment-payments", tags=["installment-payments"]
-)  # Include installment payments router
+)
+app.include_router(
+    sales_invoices.router, prefix="/sales-invoices", tags=["sales-invoices"]
+)
+app.include_router(
+    installment_sales_router.router, prefix="/installment-sales", tags=["installment-sales"]
+)
 
 
 @app.get("/")

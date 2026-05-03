@@ -29,7 +29,7 @@ const DashboardCharts = ({ items = [], alerts = [] }) => {
       {/* Stock Levels Bar Chart */}
       <div style={{ background: 'var(--color-card-background)', padding: '1.5rem', borderRadius: 'var(--border-radius-lg)', boxShadow: 'var(--shadow-md)' }}>
         <h3 style={{ marginTop: 0, color: 'var(--color-primary)' }}>مستويات المخزون</h3>
-        <ResponsiveContainer width="100%" height={300}>
+        <ResponsiveContainer width="100%" height={300} minWidth={0} minHeight={0}>
           <BarChart data={stockData}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
             <XAxis
@@ -54,7 +54,7 @@ const DashboardCharts = ({ items = [], alerts = [] }) => {
       {/* Category Distribution Pie Chart */}
       <div style={{ background: 'var(--color-card-background)', padding: '1.5rem', borderRadius: 'var(--border-radius-lg)', boxShadow: 'var(--shadow-md)' }}>
         <h3 style={{ marginTop: 0, color: 'var(--color-primary)' }}>توزيع الفئات</h3>
-        <ResponsiveContainer width="100%" height={300}>
+        <ResponsiveContainer width="100%" height={300} minWidth={0} minHeight={0}>
           <PieChart>
             <Pie
               data={pieData}

@@ -1,0 +1,312 @@
+/* ═══════════════════════════════════════════════════════════════
+   RESPONSIVE & PRINT STYLES
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Tablet */
+@media (max-width: 1024px) {
+  .sidebar {
+    width: 240px;
+  }
+
+  .content {
+    padding: var(--spacing-xl);
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  }
+
+  .dashboard-charts-row {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+  }
+
+  .dashboard-insights-row {
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-md);
+  }
+
+  .dashboard-financials-row {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+  }
+
+  .dashboard-chart-card,
+  .dashboard-card {
+    padding: var(--spacing-lg);
+  }
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  :root {
+    --header-height: 60px;
+  }
+
+  .header {
+    padding: 0 var(--spacing-md);
+  }
+
+  .header h1 {
+    font-size: 1.0625rem;
+  }
+
+  .mobile-menu-btn {
+    display: flex !important;
+  }
+
+  .main {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+    height: auto;
+    position: relative;
+    top: 0;
+    border-right: none;
+    border-bottom: 1px solid var(--color-border);
+    padding: var(--spacing-sm) var(--spacing-md);
+    box-shadow: 0 4px 12px rgba(15, 52, 96, 0.06);
+  }
+
+  .sidebar::before {
+    width: 100%;
+    height: 3px;
+    bottom: auto;
+    background: linear-gradient(90deg, var(--color-accent) 0%, var(--color-primary) 50%, var(--color-gold) 100%);
+  }
+
+  .sidebar ul {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+  }
+
+  .sidebar a {
+    flex: 1;
+    min-width: 100px;
+    justify-content: center;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8125rem;
+  }
+
+  .sidebar a::before {
+    display: none;
+  }
+
+  .content {
+    padding: var(--spacing-md);
+  }
+
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-md);
+  }
+
+  .page-title {
+    font-size: 1.5rem;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+  }
+
+  .stat-card {
+    padding: var(--spacing-lg);
+  }
+
+  .stat-card-value {
+    font-size: 1.75rem;
+  }
+
+  .dashboard-charts-row {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+  }
+
+  .dashboard-insights-row {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+  }
+
+  .dashboard-financials-row {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+  }
+
+  .dashboard-chart-card,
+  .dashboard-card {
+    padding: var(--spacing-lg);
+  }
+
+  .dashboard-table-header {
+    display: none;
+  }
+
+  .dashboard-table-row {
+    grid-template-columns: 1fr;
+    gap: 0;
+    padding: var(--spacing-md) 0;
+  }
+
+  .dashboard-table-row > div {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.25rem 0;
+  }
+
+  .dashboard-table-row > div:nth-child(1)::before {
+    content: "Item: ";
+    font-weight: 600;
+  }
+
+  .dashboard-table-row > div:nth-child(2)::before {
+    content: "Batch: ";
+    font-weight: 600;
+  }
+
+  .dashboard-table-row > div:nth-child(3)::before {
+    content: "Expiry: ";
+    font-weight: 600;
+  }
+
+  .dashboard-table-row > div:nth-child(4)::before {
+    content: "Status: ";
+    font-weight: 600;
+  }
+
+  .table-container {
+    font-size: 0.875rem;
+    border-radius: var(--border-radius-lg);
+  }
+
+  .table th,
+  .table td {
+    padding: 0.75rem var(--spacing-md);
+  }
+
+  .modal-content {
+    width: 95%;
+    padding: var(--spacing-xl);
+    border-radius: var(--border-radius-xl);
+  }
+
+  .btn {
+    font-size: 0.8125rem;
+    min-height: 38px;
+  }
+}
+
+/* Small mobile */
+@media (max-width: 480px) {
+  .header nav ul {
+    display: none;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar a {
+    min-width: 80px;
+    font-size: 0.75rem;
+  }
+
+  .dashboard-charts-row,
+  .dashboard-insights-row,
+  .dashboard-financials-row {
+    gap: var(--spacing-sm);
+  }
+
+  .dashboard-chart-card,
+  .dashboard-card {
+    padding: var(--spacing-md);
+  }
+}
+
+/* ─── RTL Support ─── */
+[data-theme="rtl"] {
+  direction: rtl;
+  text-align: right;
+}
+
+[data-theme="rtl"] .page-header {
+  flex-direction: row-reverse;
+}
+
+[data-theme="rtl"] .dashboard-table-row > div {
+  text-align: right;
+}
+
+/* Mobile-responsive table for RTL */
+@media (max-width: 768px) {
+  .dashboard-table-header {
+    display: none !important;
+  }
+
+  .dashboard-table-row {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0 !important;
+    padding: var(--spacing-md) 0 !important;
+  }
+
+  .dashboard-table-row > div {
+    display: flex !important;
+    justify-content: space-between !important;
+    padding: 0.25rem 0 !important;
+    font-size: 0.9rem !important;
+  }
+
+  /* Add RTL labels for mobile */
+  [data-theme="rtl"] .dashboard-table-row > div:nth-child(1)::before {
+    content: "اسم العنصر: ";
+    font-weight: 600;
+    color: var(--text-secondary);
+  }
+
+  [data-theme="rtl"] .dashboard-table-row > div:nth-child(2)::before {
+    content: "رقم الدفعة: ";
+    font-weight: 600;
+    color: var(--text-secondary);
+  }
+
+  [data-theme="rtl"] .dashboard-table-row > div:nth-child(3)::before {
+    content: "تاريخ الانتهاء: ";
+    font-weight: 600;
+    color: var(--text-secondary);
+  }
+
+  [data-theme="rtl"] .dashboard-table-row > div:nth-child(4)::before {
+    content: "الحالة: ";
+    font-weight: 600;
+    color: var(--text-secondary);
+  }
+}
+
+/* ─── Print Styles ─── */
+@media print {
+  .header,
+  .sidebar,
+  .btn,
+  .modal-overlay {
+    display: none !important;
+  }
+
+  .content {
+    padding: 0;
+  }
+
+  .card {
+    box-shadow: none;
+    border: 1px solid #ddd;
+  }
+
+  .table {
+    font-size: 0.75rem;
+  }
+}

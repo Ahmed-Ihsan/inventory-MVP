@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../context/ThemeContext';
-import { FaSun, FaMoon, FaBars, FaTimes, FaGlobe } from 'react-icons/fa';
+import { FaSun, FaMoon, FaBars, FaTimes } from 'react-icons/fa';
 
 const Header = () => {
   const { t, i18n } = useTranslation();
@@ -54,7 +54,12 @@ const Header = () => {
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <button
             onClick={() => changeLanguage(i18n.language === 'ar' ? 'en' : 'ar')}
-            style={iconBtnStyle}
+            style={{
+              ...iconBtnStyle,
+              width: 'auto',
+              padding: '0.5rem 1rem',
+              minWidth: '80px',
+            }}
             onMouseEnter={(e) => {
               e.currentTarget.style.background = 'rgba(255, 255, 255, 0.18)';
               e.currentTarget.style.transform = 'scale(1.05)';
@@ -65,7 +70,7 @@ const Header = () => {
             }}
             title={i18n.language === 'ar' ? 'Switch to English' : 'التبديل إلى العربية'}
           >
-            <FaGlobe />
+            {i18n.language === 'ar' ? 'English' : 'العربية'}
           </button>
 
           <button

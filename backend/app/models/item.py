@@ -22,3 +22,5 @@ class Item(Base):
     alerts = relationship("Alert", back_populates="item")
     payments = relationship("Payment", back_populates="item")
     purchase_items = relationship("PurchaseItem", back_populates="item")
+    sales_invoice_items = relationship("SalesInvoiceItem", back_populates="item")
+    installment_sale_items = relationship("InstallmentSaleItem", back_populates="item")

@@ -288,6 +288,77 @@ class ApiService {
     });
   }
 
+  // Sales Invoice methods
+  async getSalesInvoices(filters = {}) {
+    const params = new URLSearchParams(filters);
+    return this.apiCall(`/sales-invoices/?${params}`);
+  }
+
+  async getSalesInvoice(invoiceId) {
+    return this.apiCall(`/sales-invoices/${invoiceId}`);
+  }
+
+  async createSalesInvoice(invoiceData) {
+    return this.apiCall('/sales-invoices/', {
+      method: 'POST',
+      body: JSON.stringify(invoiceData)
+    });
+  }
+
+  async updateSalesInvoice(invoiceId, invoiceData) {
+    return this.apiCall(`/sales-invoices/${invoiceId}`, {
+      method: 'PUT',
+      body: JSON.stringify(invoiceData)
+    });
+  }
+
+  async deleteSalesInvoice(invoiceId) {
+    return this.apiCall(`/sales-invoices/${invoiceId}`, {
+      method: 'DELETE'
+    });
+  }
+
+  // Installment Sales methods
+  async getInstallmentSales(filters = {}) {
+    const params = new URLSearchParams(filters);
+    return this.apiCall(`/installment-sales/?${params}`);
+  }
+
+  async getInstallmentSale(saleId) {
+    return this.apiCall(`/installment-sales/${saleId}`);
+  }
+
+  async createInstallmentSale(saleData) {
+    return this.apiCall('/installment-sales/', {
+      method: 'POST',
+      body: JSON.stringify(saleData)
+    });
+  }
+
+  async updateInstallmentSale(saleId, saleData) {
+    return this.apiCall(`/installment-sales/${saleId}`, {
+      method: 'PUT',
+      body: JSON.stringify(saleData)
+    });
+  }
+
+  async deleteInstallmentSale(saleId) {
+    return this.apiCall(`/installment-sales/${saleId}`, {
+      method: 'DELETE'
+    });
+  }
+
+  async createInstallmentSalePayment(saleId, paymentData) {
+    return this.apiCall(`/installment-sales/${saleId}/payment`, {
+      method: 'POST',
+      body: JSON.stringify(paymentData)
+    });
+  }
+
+  async getInstallmentSalePayments(saleId) {
+    return this.apiCall(`/installment-sales/${saleId}/payments`);
+  }
+
   // Barcode scanning method
   async scanBarcode(imageFile) {
     const formData = new FormData();

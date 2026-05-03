@@ -1,11 +1,17 @@
 # Import all models in dependency order to avoid circular imports
 from .user import User
 from .category import Category
-from .item import Item
-from .stock_movement import StockMovement
-from .alert import Alert
-from .payment import Payment
-from .purchase import Purchase, PurchaseItem
-from .installment_payment import InstallmentPayment
+from . import (
+    user,
+    item,
+    category,
+    stock_movement,
+    alert,
+    payment,
+    purchase,
+    installment_payment,
+    sales_invoice,
+    installment_sales,
+)
 
-__all__ = ["User", "Category", "Item", "StockMovement", "Alert", "Payment", "Purchase", "PurchaseItem", "InstallmentPayment"]
+__all__ = ["User", "Category", "Item", "StockMovement", "Alert", "Payment", "Purchase", "PurchaseItem", "InstallmentPayment", "SalesInvoice", "SalesInvoiceItem", "InstallmentSale", "InstallmentSaleItem", "InstallmentSalePayment"]

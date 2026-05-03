@@ -1,6 +1,7 @@
 import React from 'react';
+import { FaInbox } from 'react-icons/fa';
 
-const Table = ({ columns, data, className = '', emptyMessage = 'No data available' }) => {
+const Table = ({ columns, data, className = '', emptyMessage = 'لا توجد بيانات للعرض' }) => {
   if (!data || data.length === 0) {
     return (
       <div className="table-container">
@@ -8,17 +9,14 @@ const Table = ({ columns, data, className = '', emptyMessage = 'No data availabl
           <thead>
             <tr>
               {columns.map((col, index) => (
-                <th key={index}>{col.header}</th>
+                <th key={index} style={{ textAlign: 'right', fontWeight: 'bold' }}>{col.header}</th>
               ))}
             </tr>
           </thead>
         </table>
-        <div style={{
-          textAlign: 'center',
-          padding: '2rem',
-          color: 'var(--color-text-muted)'
-        }}>
-          {emptyMessage}
+        <div className="table-empty-state">
+          <div className="table-empty-icon"><FaInbox /></div>
+          <p className="table-empty-msg">{emptyMessage}</p>
         </div>
       </div>
     );
@@ -30,7 +28,7 @@ const Table = ({ columns, data, className = '', emptyMessage = 'No data availabl
         <thead>
           <tr>
             {columns.map((col, index) => (
-              <th key={index}>{col.header}</th>
+              <th key={index} style={{ textAlign: 'right', fontWeight: 'bold' }}>{col.header}</th>
             ))}
           </tr>
         </thead>
@@ -38,7 +36,7 @@ const Table = ({ columns, data, className = '', emptyMessage = 'No data availabl
           {data.map((row, rowIndex) => (
             <tr key={rowIndex}>
               {columns.map((col, colIndex) => (
-                <td key={colIndex}>
+                <td key={colIndex} style={{ textAlign: col.accessor === 'actions' ? 'center' : 'right' }}>
                   {col.render ? col.render(row) : row[col.accessor]}
                 </td>
               ))}

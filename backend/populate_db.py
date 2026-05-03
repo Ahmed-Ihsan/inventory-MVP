@@ -5,7 +5,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'app'))
 from faker import Faker
 from sqlalchemy.orm import Session
 from app.database import SessionLocal
-from app.models import category, item, alert, payment
+from app.models import category, item, alert, payment, installment_sales
 
 fake = Faker()
 
@@ -79,6 +79,48 @@ def populate_database():
             db.add(pay)
         db.commit()
         print("Created 15 payments.")
+
+        print("Creating fake installment sales...")
+        items_list = db.query(item.Item).all()
+        for i in range(10):
+            # Create installment sale with some overdue
+            from datetime import datetime, timedelta
+            is_overdue = i < 3  # First 3 will be overdue
+            start_date = datetime.now() - timedelta(days=60) if is_overdue else datetime.now()
+            next_payment_date = start_date - timedelta(days=30) if is_overdue else datetime.now() + timedelta(days=30)
+            
+            # Create an item for the installment sale
+            if items_list:
+                sale_item = items_list[i % len(items_list)]
+                installment = installment_sales.InstallmentSale(
+                    customer_name=fake.name(),
+                    customer_phone=fake.phone_number(),
+                    total_amount=round(fake.pyfloat(left_digits=3, right_digits=2, positive=True) * 12, 2),  # Total for 12 months
+                    monthly_payment=round(fake.pyfloat(left_digits=2, right_digits=2, positive=True), 2),
+                    paid_months=0,
+                    total_months=12,
+                    status='active',
+                    start_date=start_date,
+                    end_date=start_date + timedelta(days=365),
+                    next_payment_date=next_payment_date,
+                    notes=fake.text(max_nb_chars=100),
+                )
+                db.add(installment)
+                db.commit()
+                
+                # Add items to the installment sale
+                sale_item_data = installment_sales.InstallmentSaleItem(
+                    installment_sale_id=installment.id,
+                    item_id=sale_item.id,
+                    item_name=sale_item.name,
+                    quantity=fake.random_int(min=1, max=5),
+                    cost_price=sale_item.price * 0.7,
+                    selling_price=sale_item.price,
+                    total_price=sale_item.price * fake.random_int(min=1, max=5),
+                )
+                db.add(sale_item_data)
+                db.commit()
+        print("Created 10 installment sales (3 overdue).")
 
         print("Database populated successfully!")
     except Exception as e:

@@ -7,8 +7,10 @@ node_modules/
 /build
 /dist
 
-# Backend (separate repository)
-backend/
+# Backend exclusions
+backend/venv/
+backend/*.db
+backend/.pytest_cache/
 
 # Environment variables
 .env

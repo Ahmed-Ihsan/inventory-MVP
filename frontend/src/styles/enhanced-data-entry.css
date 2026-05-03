@@ -1,0 +1,240 @@
+/* ═══════════════════════════════════════════════════════════════
+   ENHANCED DATA ENTRY COMPONENTS
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ─── Button: loading state ─── */
+.btn-full-width { width: 100%; }
+
+.btn-loading {
+  cursor: wait;
+  position: relative;
+}
+
+.btn-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.65s linear infinite;
+  flex-shrink: 0;
+}
+
+.btn-label-loading {
+  opacity: 0.75;
+}
+
+/* ─── Input wrapper (prefix / suffix / clear / password toggle) ─── */
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-wrapper .input {
+  flex: 1;
+}
+
+.input-prefix {
+  position: absolute;
+  left: 12px;
+  display: flex;
+  align-items: center;
+  color: var(--color-text-muted);
+  pointer-events: none;
+  font-size: 0.875rem;
+  z-index: 1;
+}
+
+.input-suffix-actions {
+  position: absolute;
+  right: 10px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  z-index: 1;
+}
+
+.input-suffix-icon {
+  display: flex;
+  align-items: center;
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+  pointer-events: none;
+}
+
+.input-with-prefix { padding-left: 2.4rem; }
+.input-with-suffix { padding-right: 2.8rem; }
+
+/* clear / eye toggle buttons inside input */
+.input-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: none;
+  border-radius: var(--border-radius-md);
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.input-action-btn:hover {
+  background: var(--color-lighter);
+  color: var(--color-primary);
+}
+
+/* ─── Character counter ─── */
+.char-counter {
+  position: absolute;
+  bottom: -1.3rem;
+  right: 0;
+  font-size: 0.72rem;
+  color: var(--color-text-muted);
+  pointer-events: none;
+}
+
+.char-counter-limit {
+  color: var(--color-danger);
+  font-weight: 600;
+}
+
+/* extra bottom margin on form-group when char-counter is present */
+.form-group:has(.char-counter) {
+  margin-bottom: calc(var(--spacing-lg) + 1.4rem);
+}
+
+/* ─── Input success state ─── */
+.input-success {
+  border-color: var(--color-success);
+}
+
+.input-success:focus {
+  border-color: var(--color-success);
+  box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.12);
+}
+
+/* ─── Form feedback messages ─── */
+.form-error {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: var(--spacing-xs);
+  font-size: 0.8125rem;
+  color: var(--color-danger);
+  font-weight: 500;
+  animation: slideDown 0.15s ease-out;
+}
+
+.form-success {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: var(--spacing-xs);
+  font-size: 0.8125rem;
+  color: var(--color-success-dark);
+  font-weight: 500;
+  animation: slideDown 0.15s ease-out;
+}
+
+/* ─── Form label icon ─── */
+.form-label-icon {
+  display: inline-flex;
+  align-items: center;
+  margin-inline-end: 6px;
+  color: var(--color-accent);
+  vertical-align: middle;
+}
+
+.form-required-mark {
+  color: var(--color-danger);
+  margin-inline-start: 1px;
+}
+
+/* ─── ConfirmDialog ─── */
+.confirm-overlay {
+  align-items: center;
+}
+
+.confirm-dialog {
+  background: var(--color-card-background);
+  border-radius: var(--border-radius-2xl);
+  padding: 2.5rem 2rem 2rem;
+  max-width: 420px;
+  width: 92%;
+  box-shadow: 0 32px 64px -12px rgba(8, 29, 53, 0.4), 0 0 0 1px rgba(0, 180, 216, 0.08);
+  animation: modalSlideUp var(--transition-slow) cubic-bezier(0.34, 1.56, 0.64, 1);
+  border: 1px solid var(--color-border-light);
+  text-align: center;
+  position: relative;
+}
+
+.confirm-dialog::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  border-radius: var(--border-radius-2xl) var(--border-radius-2xl) 0 0;
+  background: linear-gradient(90deg, var(--color-primary), var(--color-accent), var(--color-gold));
+}
+
+.confirm-icon-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  margin-bottom: 1.25rem;
+}
+
+.confirm-icon-danger {
+  background: var(--color-danger-50);
+  color: var(--color-danger);
+  border: 2px solid var(--color-danger-light);
+}
+
+.confirm-icon-warning {
+  background: var(--color-warning-50);
+  color: var(--color-warning);
+  border: 2px solid var(--color-warning-light);
+}
+
+.confirm-icon-info {
+  background: var(--color-info-50);
+  color: var(--color-info);
+  border: 2px solid var(--color-info-light);
+}
+
+.confirm-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  font-family: var(--font-heading);
+  color: var(--color-text);
+  margin-bottom: 0.625rem;
+  letter-spacing: -0.01em;
+}
+
+.confirm-message {
+  font-size: 0.9rem;
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+  margin-bottom: 1.75rem;
+}
+
+.confirm-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+}
+
+.confirm-actions .btn {
+  min-width: 110px;
+}
