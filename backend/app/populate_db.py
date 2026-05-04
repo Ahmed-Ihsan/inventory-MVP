@@ -4,7 +4,7 @@ import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from app.database import SessionLocal
-from app.models import category, item, alert, payment, purchase
+from app.models import category, item, alert, purchase
 
 fake = Faker()
 
@@ -67,27 +67,6 @@ def create_fake_alerts(db: Session, items):
     db.commit()
     return alerts_created
 
-def create_fake_payments(db: Session, items, num_payments: int = 15):
-    payment_types = ['paid', 'debt', 'credit']
-    payment_statuses = ['pending', 'completed', 'overdue']
-    payments = []
-    for _ in range(num_payments):
-        payment_data = payment.Payment(
-            amount=round(fake.pyfloat(left_digits=3, right_digits=2, positive=True), 2),
-            payment_type=fake.random_element(payment_types),
-            description=fake.text(max_nb_chars=100),
-            item_id=fake.random_element(items).id if items else None,
-            transaction_date=fake.date_time_between(start_date='-30d', end_date='now'),
-            due_date=fake.date_time_between(start_date='now', end_date='+30d') if fake.boolean() else None,
-            status=fake.random_element(payment_statuses)
-        )
-        db.add(payment_data)
-        payments.append(payment_data)
-    db.commit()
-    for pay in payments:
-        db.refresh(pay)
-    return payments
-
 def create_fake_purchases(db: Session, items, num_purchases: int = 10):
     payment_methods = ['cash', 'installment']
     statuses = ['pending', 'completed', 'cancelled']
@@ -126,10 +105,6 @@ def populate_database():
         print("Creating fake alerts...")
         alerts_count = create_fake_alerts(db, items)
         print(f"Created {alerts_count} alerts.")
-
-        print("Creating fake payments...")
-        payments = create_fake_payments(db, items, 15)
-        print(f"Created {len(payments)} payments.")
 
         print("Creating fake purchases...")
         purchases = create_fake_purchases(db, items, 10)

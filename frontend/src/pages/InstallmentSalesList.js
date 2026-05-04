@@ -9,11 +9,24 @@ import Button from '../components/common/Button';
 import Input from '../components/common/Input';
 import Loading from '../components/common/Loading';
 import EmptyState from '../components/common/EmptyState';
+import PaymentDetailsModal from '../components/installments/PaymentDetailsModal';
+import ConfirmDialog from '../components/common/ConfirmDialog';
 
 const InstallmentSalesList = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { addToast } = useToast();
+
+  const formatCurrency = (amount) => {
+    const numAmount = parseFloat(amount) || 0;
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'IQD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(numAmount);
+  };
+
   const [sales, setSales] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedSale, setSelectedSale] = useState(null);
@@ -32,17 +45,33 @@ const InstallmentSalesList = () => {
       setLoading(true);
       const filters = {};
       if (statusFilter === 'overdue') {
-        // For overdue, we need to get all active sales and filter client-side
-        const allSales = await apiService.getInstallmentSales({ status: 'active' });
-        setSales(allSales);
+        filters.overdue_only = true;
       } else if (statusFilter) {
         filters.status = statusFilter;
-        const salesData = await apiService.getInstallmentSales(filters);
-        setSales(salesData);
-      } else {
-        const salesData = await apiService.getInstallmentSales(filters);
-        setSales(salesData);
       }
+      
+      const salesData = await apiService.getInstallmentSales(filters);
+      
+      // Calculate correct values for each sale
+      const salesWithCalculations = salesData.map(sale => {
+        const itemsTotal = sale.items?.reduce((sum, item) => sum + (item.total_price || 0), 0) || 0;
+        const correctTotal = itemsTotal > 0 ? itemsTotal : sale.total_amount || 0;
+        const correctDownPayment = sale.down_payment || 0;
+        const totalPaid = sale.payments?.reduce((sum, payment) => sum + (payment.amount || 0), 0) || 0;
+        const rawRemaining = correctTotal - correctDownPayment - totalPaid;
+        const correctRemaining = Math.max(0, Math.round(rawRemaining));
+        const correctStatus = correctRemaining === 0 ? 'completed' : sale.status;
+        
+        return {
+          ...sale,
+          _correctTotal: correctTotal,
+          _correctDownPayment: correctDownPayment,
+          _correctRemaining: correctRemaining,
+          _correctStatus: correctStatus
+        };
+      });
+      
+      setSales(salesWithCalculations);
     } catch (error) {
       addToast('خطأ في تحميل بيانات الأقساط', 'error');
     } finally {
@@ -52,6 +81,8 @@ const InstallmentSalesList = () => {
 
   const handleViewDetails = (sale) => {
     setSelectedSale(sale);
+    setPaymentAmount(0);
+    setPaymentNotes('');
     setShowPaymentModal(true);
     checkItemStock(sale);
   };
@@ -59,7 +90,7 @@ const InstallmentSalesList = () => {
   const checkItemStock = async (sale) => {
     try {
       const itemsWithStock = await Promise.all(
-        sale.items.map(async (item) => {
+        (sale.items || []).map(async (item) => {
           try {
             const itemDetails = await apiService.getItem(item.item_id);
             return { ...item, current_stock: itemDetails.current_stock };
@@ -80,10 +111,8 @@ const InstallmentSalesList = () => {
       return;
     }
 
-    // Check if any items are out of stock
-    const outOfStockItems = selectedSale.items.filter(item => item.current_stock <= 0);
-    if (outOfStockItems.length > 0) {
-      addToast(`لا يمكن الدفع - الأصناف التالية غير متوفرة في المخزون: ${outOfStockItems.map(i => i.item_name).join(', ')}`, 'error');
+    if (paymentAmount > selectedSale._correctRemaining) {
+      addToast('المبلغ المدخل أكبر من المبلغ المتبقي', 'error');
       return;
     }
 
@@ -106,15 +135,60 @@ const InstallmentSalesList = () => {
     }
   };
 
-  const getStatusBadge = (sale) => {
-    if (sale.status === 'completed') {
-      return <span style={{ padding: '0.25rem 0.75rem', borderRadius: '20px', background: '#10b98120', color: '#fff', fontSize: '0.75rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}><FaCheck size={10} /> مكتمل</span>;
-    } else if (sale.status === 'cancelled') {
-      return <span style={{ padding: '0.25rem 0.75rem', borderRadius: '20px', background: '#ef444420', color: '#fff', fontSize: '0.75rem', fontWeight: 600 }}>ملغي</span>;
-    } else if (sale.next_payment_date && new Date(sale.next_payment_date) < new Date()) {
-      return <span style={{ padding: '0.25rem 0.75rem', borderRadius: '20px', background: '#f59e0b20', color: '#fff', fontSize: '0.75rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}><FaExclamationCircle size={10} /> متأخر</span>;
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+
+  const handleDeleteSale = async () => {
+    if (!confirmDeleteId) return;
+    try {
+      await apiService.deleteInstallmentSale(confirmDeleteId);
+      addToast('تم حذف البيع بنجاح', 'success');
+      setConfirmDeleteId(null);
+      loadSales();
+    } catch (error) {
+      addToast('خطأ في حذف البيع: ' + error.message, 'error');
     }
-    return <span style={{ padding: '0.25rem 0.75rem', borderRadius: '20px', background: '#3b82f620', color: '#fff', fontSize: '0.75rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}><FaClock size={10} /> نشط</span>;
+  };
+
+  const handleExportPayments = async (saleId) => {
+    try {
+      const blob = await apiService.exportPaymentHistory(saleId);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `payment_history_${saleId}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+      addToast('تم تصدير سجل المدفوعات', 'success');
+    } catch (error) {
+      addToast('خطأ في تصدير المدفوعات: ' + error.message, 'error');
+    }
+  };
+
+  const getStatusBadge = (sale) => {
+    const status = sale._correctStatus !== undefined ? sale._correctStatus : sale.status;
+    const statusStyles = {
+      active: { background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', color: '#fff' },
+      completed: { background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)', color: '#fff' },
+      cancelled: { background: 'linear-gradient(135deg, #6b7280 0%, #4b5563 100%)', color: '#fff' },
+      overdue: { background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)', color: '#fff' },
+    };
+    const style = statusStyles[status] || statusStyles.active;
+    
+    return (
+      <span style={{
+        ...style,
+        padding: '0.375rem 0.875rem',
+        borderRadius: '9999px',
+        fontSize: '0.75rem',
+        fontWeight: 600,
+        textTransform: 'uppercase',
+        letterSpacing: '0.05em',
+      }}>
+        {status === 'active' ? 'نشط' : status === 'completed' ? 'مكتمل' : status === 'cancelled' ? 'ملغي' : status === 'overdue' ? 'متأخر' : status}
+      </span>
+    );
   };
 
   const filteredSales = sales.filter(sale => {
@@ -123,25 +197,34 @@ const InstallmentSalesList = () => {
       (sale.customer_phone && sale.customer_phone.includes(searchTerm));
     
     if (statusFilter === 'overdue') {
-      return matchesSearch && sale.status === 'active' && sale.next_payment_date && new Date(sale.next_payment_date) < new Date();
+      // Check if status is overdue OR if it's active with past due date
+      const isOverdue = sale.status === 'overdue' || 
+                       (sale.status === 'active' && sale.next_payment_date && new Date(sale.next_payment_date) < new Date());
+      return matchesSearch && isOverdue;
     }
     
     if (statusFilter && statusFilter !== 'overdue') {
-      return matchesSearch && sale.status === statusFilter;
+      return matchesSearch && (sale._correctStatus || sale.status) === statusFilter;
     }
     
     return matchesSearch;
   });
 
   const overdueSales = sales.filter(sale => 
-    sale.status === 'active' && sale.next_payment_date && new Date(sale.next_payment_date) < new Date()
+    sale.status === 'overdue' || (sale.status === 'active' && sale.next_payment_date && new Date(sale.next_payment_date) < new Date())
   );
 
   const columns = [
     { header: 'العميل', accessor: 'customer_name', sortable: true },
     { header: 'الهاتف', accessor: 'customer_phone', sortable: true },
-    { header: 'الإجمالي (د.ع.)', accessor: 'total_amount', sortable: true, render: (sale) => sale.total_amount.toLocaleString() },
-    { header: 'القسط الشهري (د.ع.)', accessor: 'monthly_payment', sortable: true, render: (sale) => sale.monthly_payment.toLocaleString() },
+    { header: 'الإجمالي (د.ع.)', accessor: 'total_amount', sortable: true, render: (sale) => formatCurrency(sale._correctTotal || 0) },
+    { header: 'المتبقي (د.ع.)', accessor: 'remaining_amount', sortable: true, render: (sale) => formatCurrency(sale._correctRemaining || 0) },
+    { header: 'القسط الشهري (د.ع.)', accessor: 'monthly_payment', sortable: true, render: (sale) => {
+      const correctRemaining = sale._correctRemaining !== undefined ? sale._correctRemaining : (sale.total_amount - (sale.down_payment || 0));
+      const remainingMonths = sale.total_months - sale.paid_months;
+      const correctMonthly = remainingMonths > 0 ? Math.round(correctRemaining / remainingMonths) : 0;
+      return formatCurrency(correctMonthly);
+    }},
     { header: 'الأقساط المدفوعة', accessor: 'paid_months', sortable: true, render: (sale) => `${sale.paid_months}/${sale.total_months}` },
     { header: 'الدفعة القادمة', accessor: 'next_payment_date', sortable: true, render: (sale) => sale.next_payment_date ? new Date(sale.next_payment_date).toLocaleDateString('ar-SA') : '-' },
     { header: 'الحالة', accessor: 'status', sortable: true, render: (sale) => getStatusBadge(sale) },
@@ -149,9 +232,17 @@ const InstallmentSalesList = () => {
       header: 'الإجراءات',
       accessor: 'actions',
       render: (sale) => (
-        <Button onClick={() => handleViewDetails(sale)} size="sm">
-          <FaEye size={12} style={{ marginLeft: '0.25rem' }} /> عرض
-        </Button>
+        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+          <Button onClick={() => handleViewDetails(sale)} size="sm">
+            <FaEye size={12} style={{ marginLeft: '0.25rem' }} /> عرض
+          </Button>
+          <Button onClick={() => handleExportPayments(sale.id)} size="sm" variant="secondary">
+            <FaReceipt size={12} style={{ marginLeft: '0.25rem' }} /> تصدير
+          </Button>
+          <Button onClick={() => setConfirmDeleteId(sale.id)} size="sm" variant="danger">
+            حذف
+          </Button>
+        </div>
       ),
     },
   ];
@@ -314,7 +405,7 @@ const InstallmentSalesList = () => {
               <FaClock size={20} style={{ opacity: 0.9 }} />
             </div>
           </div>
-          <div style={{ fontSize: '2.5rem', fontWeight: 800, marginBottom: '0.5rem', letterSpacing: '-0.02em' }}>{sales.filter(s => s.status === 'active').length}</div>
+          <div style={{ fontSize: '2.5rem', fontWeight: 800, marginBottom: '0.5rem', letterSpacing: '-0.02em' }}>{sales.filter(s => s._correctStatus === 'active').length}</div>
           <div style={{ fontSize: '0.85rem', opacity: 0.9, fontWeight: 500 }}>قسط جاري</div>
         </div>
 
@@ -336,7 +427,7 @@ const InstallmentSalesList = () => {
               <FaCheck size={20} style={{ opacity: 0.9 }} />
             </div>
           </div>
-          <div style={{ fontSize: '2.5rem', fontWeight: 800, marginBottom: '0.5rem', letterSpacing: '-0.02em' }}>{sales.filter(s => s.status === 'completed').length}</div>
+          <div style={{ fontSize: '2.5rem', fontWeight: 800, marginBottom: '0.5rem', letterSpacing: '-0.02em' }}>{sales.filter(s => s._correctStatus === 'completed').length}</div>
           <div style={{ fontSize: '0.85rem', opacity: 0.9, fontWeight: 500 }}>دفعة مكتملة</div>
         </div>
 
@@ -358,7 +449,7 @@ const InstallmentSalesList = () => {
               <FaExclamationCircle size={20} style={{ opacity: 0.9 }} />
             </div>
           </div>
-          <div style={{ fontSize: '2.5rem', fontWeight: 800, marginBottom: '0.5rem', letterSpacing: '-0.02em' }}>{sales.filter(s => s.status === 'active' && s.next_payment_date && new Date(s.next_payment_date) < new Date()).length}</div>
+          <div style={{ fontSize: '2.5rem', fontWeight: 800, marginBottom: '0.5rem', letterSpacing: '-0.02em' }}>{overdueSales.length}</div>
           <div style={{ fontSize: '0.85rem', opacity: 0.9, fontWeight: 500 }}>قسط متأخر</div>
         </div>
       </div>
@@ -436,311 +527,27 @@ const InstallmentSalesList = () => {
 
       {/* Payment Details Modal */}
       {showPaymentModal && selectedSale && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'rgba(0,0,0,0.6)',
-          backdropFilter: 'blur(8px)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000,
-          animation: 'fadeIn 0.2s ease',
-        }}>
-          <div style={{
-            background: 'var(--color-card-background)',
-            borderRadius: '28px',
-            padding: '2.5rem',
-            maxWidth: '650px',
-            width: '90%',
-            maxHeight: '85vh',
-            overflow: 'auto',
-            boxShadow: '0 32px 96px rgba(0,0,0,0.3)',
-            animation: 'slideUp 0.3s ease',
-          }}>
-            {/* Header */}
-            <div style={{ 
-              display: 'flex', 
-              justifyContent: 'space-between', 
-              alignItems: 'center', 
-              marginBottom: '2rem',
-              paddingBottom: '1.5rem',
-              borderBottom: '1px solid var(--color-border-light)',
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                <div style={{
-                  width: '56px',
-                  height: '56px',
-                  borderRadius: '16px',
-                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  boxShadow: '0 8px 24px rgba(102,126,234,0.35)',
-                }}>
-                  <FaReceipt size={24} style={{ color: '#fff' }} />
-                </div>
-                <div>
-                  <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 800, color: 'var(--color-text)', letterSpacing: '-0.02em' }}>تفاصيل الأقساط</h2>
-                  <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--color-text-muted)', marginTop: '0.25rem' }}>عرض وتسجيل دفعات الأقساط</p>
-                </div>
-              </div>
-              <button
-                onClick={() => setShowPaymentModal(false)}
-                style={{ 
-                  background: 'var(--color-surface)', 
-                  border: '1px solid var(--color-border-light)', 
-                  fontSize: '1.25rem', 
-                  cursor: 'pointer', 
-                  color: 'var(--color-text-muted)', 
-                  width: '40px',
-                  height: '40px',
-                  borderRadius: '12px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  transition: 'all 0.2s ease',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'var(--color-border-light)';
-                  e.currentTarget.style.color = 'var(--color-text)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'var(--color-surface)';
-                  e.currentTarget.style.color = 'var(--color-text-muted)';
-                }}
-              >
-                ×
-              </button>
-            </div>
-
-            {/* Customer Info Card */}
-            <div style={{ marginBottom: '2rem', padding: '1.75rem', background: 'linear-gradient(135deg, #667eea15 0%, #764ba215 100%)', borderRadius: '20px', border: '1px solid #667eea25' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1.5rem' }}>
-                <div>
-                  <span style={{ fontSize: '0.8rem', color: '#667eea', fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: '0.5rem', display: 'block' }}>العميل</span>
-                  <div style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--color-text)', marginTop: '0.25rem' }}>{selectedSale.customer_name}</div>
-                </div>
-                <div>
-                  <span style={{ fontSize: '0.8rem', color: '#667eea', fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: '0.5rem', display: 'block' }}>الحالة</span>
-                  <div style={{ marginTop: '0.25rem' }}>{getStatusBadge(selectedSale)}</div>
-                </div>
-                <div>
-                  <span style={{ fontSize: '0.8rem', color: '#667eea', fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: '0.5rem', display: 'block' }}>الإجمالي</span>
-                  <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#10b981', marginTop: '0.25rem' }}>{selectedSale.total_amount.toLocaleString()} د.ع.</div>
-                </div>
-                <div>
-                  <span style={{ fontSize: '0.8rem', color: '#667eea', fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: '0.5rem', display: 'block' }}>المتبقي</span>
-                  <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#ef4444', marginTop: '0.25rem' }}>{selectedSale.remaining_amount.toLocaleString()} د.ع.</div>
-                </div>
-              </div>
-            </div>
-
-            {/* Items Section */}
-            <div style={{ marginBottom: '2rem' }}>
-              <h3 style={{ margin: '0 0 1.25rem 0', fontSize: '1.15rem', fontWeight: 800, color: 'var(--color-text)', letterSpacing: '-0.01em', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <FaBox size={16} style={{ color: '#fff' }} />
-                </div>
-                الأصناف
-              </h3>
-              {selectedSale.items && selectedSale.items.length > 0 ? (
-                <>
-                  <div style={{ marginBottom: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                    {selectedSale.items.map((item, index) => (
-                      <div key={index} style={{
-                        padding: '1.25rem',
-                        borderRadius: '16px',
-                        background: item.current_stock <= 0 ? '#ef444410' : 'var(--color-surface)',
-                        border: item.current_stock <= 0 ? '1px solid #ef4444' : '1px solid var(--color-border-light)',
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        transition: 'all 0.2s ease',
-                        boxShadow: item.current_stock <= 0 ? '0 4px 16px rgba(239,68,68,0.15)' : '0 2px 8px rgba(0,0,0,0.04)',
-                      }}>
-                        <div>
-                          <div style={{ fontSize: '1rem', fontWeight: 700, color: item.current_stock <= 0 ? '#ef4444' : 'var(--color-text)', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            {item.item_name}
-                            {item.current_stock <= 0 && (
-                              <span style={{ fontSize: '0.7rem', background: '#ef4444', color: '#fff', padding: '0.25rem 0.6rem', borderRadius: '6px', fontWeight: 600, letterSpacing: '0.02em' }}>
-                                غير متوفر
-                              </span>
-                            )}
-                          </div>
-                          <div style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', fontWeight: 500 }}>
-                            الكمية: {item.quantity} × {item.selling_price.toLocaleString()} د.ع. · المخزون: {item.current_stock}
-                          </div>
-                        </div>
-                        <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#667eea', background: '#667eea10', padding: '0.5rem 1rem', borderRadius: '10px' }}>
-                          {item.total_price.toLocaleString()} د.ع.
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                {selectedSale.items.some(item => item.current_stock <= 0) && (
-                  <div style={{
-                    padding: '1.25rem',
-                    borderRadius: '12px',
-                    background: 'linear-gradient(135deg, #ef444415 0%, #dc262615 100%)',
-                    border: '1px solid #ef444430',
-                    marginBottom: '1.5rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '1rem',
-                  }}>
-                    <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <FaExclamationCircle size={20} style={{ color: '#fff' }} />
-                    </div>
-                    <div>
-                      <div style={{ fontSize: '0.95rem', fontWeight: 700, color: '#ef4444' }}>
-                        لا يمكن تسجيل الدفعة
-                      </div>
-                      <div style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', marginTop: '0.25rem' }}>
-                        بعض الأصناف غير متوفرة في المخزون
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </>
-            ) : (
-              <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--color-text-muted)', marginBottom: '1.5rem', borderRadius: '16px', background: 'var(--color-surface)', border: '1px dashed var(--color-border-light)' }}>
-                لا توجد أصناف
-              </div>
-            )}
-            </div>
-
-            {/* Payment History Section */}
-            <div style={{ marginBottom: '2rem' }}>
-              <h3 style={{ margin: '0 0 1.25rem 0', fontSize: '1.15rem', fontWeight: 800, color: 'var(--color-text)', letterSpacing: '-0.01em', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <FaHistory size={16} style={{ color: '#fff' }} />
-                </div>
-                سجل الدفعات
-              </h3>
-              {selectedSale.payments && selectedSale.payments.length > 0 ? (
-                <div style={{ marginBottom: '1.5rem', maxHeight: '200px', overflow: 'auto', padding: '0.5rem' }}>
-                  {selectedSale.payments.map((payment) => (
-                    <div key={payment.id} style={{
-                      padding: '1rem',
-                      borderRadius: '12px',
-                      background: 'linear-gradient(135deg, #10b98110 0%, #05966910 100%)',
-                      marginBottom: '0.75rem',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '0.5rem',
-                      border: '1px solid #10b98125',
-                      transition: 'all 0.2s ease',
-                    }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <div>
-                          <div style={{ fontSize: '0.95rem', fontWeight: 700, color: '#10b981', marginBottom: '0.25rem' }}>القسط {payment.month_number}</div>
-                          <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', fontWeight: 500 }}>{new Date(payment.payment_date).toLocaleDateString('ar-SA')}</div>
-                        </div>
-                        <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#10b981' }}>
-                          {payment.amount.toLocaleString()} د.ع.
-                        </div>
-                      </div>
-                      {payment.notes && (
-                        <div style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', fontWeight: 500, paddingTop: '0.5rem', borderTop: '1px solid #10b98120' }}>
-                          ملاحظات: {payment.notes}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--color-text-muted)', borderRadius: '16px', background: 'var(--color-surface)', border: '1px dashed var(--color-border-light)' }}>
-                  لا توجد دفعات مسجلة
-                </div>
-              )}
-            </div>
-
-            {selectedSale.status === 'active' && selectedSale.paid_months < selectedSale.total_months && (
-              <div style={{ padding: '1.75rem', background: 'linear-gradient(135deg, #667eea10 0%, #764ba210 100%)', borderRadius: '20px', border: '1px solid #667eea25' }}>
-                <h3 style={{ margin: '0 0 1.25rem 0', fontSize: '1.15rem', fontWeight: 800, color: 'var(--color-text)', letterSpacing: '-0.01em', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <FaMoneyBillWave size={16} style={{ color: '#fff' }} />
-                  </div>
-                  تسجيل دفعة جديدة
-                </h3>
-                <div style={{ marginBottom: '1.25rem' }}>
-                  <label style={{ fontSize: '0.8rem', color: 'var(--color-text)', fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: '0.5rem', display: 'block' }}>
-                    المبلغ (IQD)
-                  </label>
-                  <input
-                    type="number"
-                    value={paymentAmount}
-                    onChange={(e) => setPaymentAmount(parseFloat(e.target.value) || 0)}
-                    placeholder={selectedSale.monthly_payment}
-                    disabled={selectedSale.items.some(item => item.current_stock <= 0)}
-                    style={{
-                      width: '100%',
-                      padding: '0.875rem 1.25rem',
-                      borderRadius: '14px',
-                      border: '1px solid var(--color-border-light)',
-                      background: 'var(--color-card-background)',
-                      fontSize: '1rem',
-                      fontWeight: 600,
-                      color: 'var(--color-text)',
-                      opacity: selectedSale.items.some(item => item.current_stock <= 0) ? 0.6 : 1,
-                      boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
-                      transition: 'all 0.2s ease',
-                    }}
-                  />
-                </div>
-                <div style={{ marginBottom: '1.5rem' }}>
-                  <label style={{ fontSize: '0.8rem', color: 'var(--color-text)', fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: '0.5rem', display: 'block' }}>
-                    ملاحظات
-                  </label>
-                  <input
-                    type="text"
-                    value={paymentNotes}
-                    onChange={(e) => setPaymentNotes(e.target.value)}
-                    placeholder="ملاحظات اختيارية"
-                    disabled={selectedSale.items.some(item => item.current_stock <= 0)}
-                    style={{
-                      width: '100%',
-                      padding: '0.875rem 1.25rem',
-                      borderRadius: '14px',
-                      border: '1px solid var(--color-border-light)',
-                      background: 'var(--color-card-background)',
-                      fontSize: '1rem',
-                      color: 'var(--color-text)',
-                      opacity: selectedSale.items.some(item => item.current_stock <= 0) ? 0.6 : 1,
-                      boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
-                      transition: 'all 0.2s ease',
-                    }}
-                  />
-                </div>
-                <Button
-                  onClick={handleMakePayment}
-                  disabled={selectedSale.items.some(item => item.current_stock <= 0)}
-                  style={{
-                    width: '100%',
-                    padding: '1rem',
-                    borderRadius: '14px',
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                    border: 'none',
-                    color: '#fff',
-                    fontSize: '1rem',
-                    fontWeight: 700,
-                    boxShadow: '0 8px 24px rgba(102,126,234,0.4)',
-                    opacity: selectedSale.items.some(item => item.current_stock <= 0) ? 0.6 : 1,
-                    cursor: selectedSale.items.some(item => item.current_stock <= 0) ? 'not-allowed' : 'pointer',
-                    transition: 'all 0.3s ease',
-                  }}
-                >
-                  تسجيل الدفعة
-                </Button>
-              </div>
-            )}
-          </div>
-        </div>
+        <PaymentDetailsModal
+          sale={selectedSale}
+          onClose={() => setShowPaymentModal(false)}
+          onMakePayment={handleMakePayment}
+          paymentAmount={paymentAmount}
+          setPaymentAmount={setPaymentAmount}
+          paymentNotes={paymentNotes}
+          setPaymentNotes={setPaymentNotes}
+        />
       )}
+
+      <ConfirmDialog
+        isOpen={!!confirmDeleteId}
+        title="حذف البيع بالأقساط"
+        message="هل أنت متأكد من حذف هذا البيع بالأقساط؟ لا يمكن التراجع عن هذا الإجراء."
+        confirmLabel="حذف"
+        cancelLabel="إلغاء"
+        variant="danger"
+        onConfirm={handleDeleteSale}
+        onCancel={() => setConfirmDeleteId(null)}
+      />
     </div>
   );
 };

@@ -65,29 +65,39 @@ const InstallmentSales = () => {
   const handleItemChange = (value) => {
     const selectedItem = items.find(i => String(i.id) === String(value));
     if (selectedItem) {
+      const sellingPrice = selectedItem.price || 0;
+      const quantity = values.quantity || 1;
+      const newTotal = sellingPrice * quantity;
+      const downPayment = values.down_payment || 0;
+      const months = values.total_months || 1;
+      const remaining = newTotal - downPayment;
       setValues(prev => ({
         ...prev,
         item_id: String(value),
         cost_price: selectedItem.price || 0,
-        selling_price: selectedItem.price || 0,
+        selling_price: sellingPrice,
       }));
+      setTotalAmount(newTotal);
+      setMonthlyPayment(months > 0 ? remaining / months : 0);
     }
   };
 
   const handleChange = (field) => (e) => {
     const value = e.target.type === 'number' ? parseFloat(e.target.value) : e.target.value;
     setValues(prev => ({ ...prev, [field]: value }));
-    
-    // Calculate totals when relevant fields change
+
+    // Use the new value for the changed field to avoid stale closure
+    const sellingPrice = field === 'selling_price' ? (value || 0) : (values.selling_price || 0);
+    const quantity = field === 'quantity' ? (value || 1) : (values.quantity || 1);
+    const newTotal = sellingPrice * quantity;
+
     if (field === 'selling_price' || field === 'quantity') {
-      const newTotal = (values.selling_price || 0) * (values.quantity || 1);
       setTotalAmount(newTotal);
     }
-    
+
     if (field === 'total_months' || field === 'down_payment' || field === 'selling_price' || field === 'quantity') {
-      const newTotal = (values.selling_price || 0) * (values.quantity || 1);
-      const downPayment = field === 'down_payment' ? value : values.down_payment;
-      const months = field === 'total_months' ? value : values.total_months;
+      const downPayment = field === 'down_payment' ? (value || 0) : (values.down_payment || 0);
+      const months = field === 'total_months' ? (value || 1) : (values.total_months || 1);
       const remaining = newTotal - downPayment;
       const monthly = months > 0 ? remaining / months : 0;
       setMonthlyPayment(monthly);
@@ -132,22 +142,30 @@ const InstallmentSales = () => {
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
+      // Recalculate from current values to avoid stale state
+      const computedTotal = (values.selling_price || 0) * (values.quantity || 1);
+      const computedDownPayment = values.down_payment || 0;
+      const computedRemaining = computedTotal - computedDownPayment;
+      const computedMonthly = (values.total_months || 1) > 0 ? computedRemaining / (values.total_months || 1) : 0;
+      const profitMargin = values.selling_price > 0
+        ? ((values.selling_price - values.cost_price) / values.selling_price * 100).toFixed(2)
+        : 0;
       const saleData = {
         customer_name: values.customer_name,
         customer_phone: values.customer_phone,
         items: [{
-          item_id: values.item_id,
+          item_id: parseInt(values.item_id) || null,
           item_name: items.find(i => String(i.id) === String(values.item_id))?.name || '',
           quantity: values.quantity,
           cost_price: values.cost_price,
           selling_price: values.selling_price,
-          profit_margin: ((values.selling_price - values.cost_price) / values.selling_price * 100).toFixed(2),
-          total_price: values.selling_price * values.quantity,
+          profit_margin: parseFloat(profitMargin),
+          total_price: computedTotal,
         }],
-        total_amount: totalAmount,
-        down_payment: values.down_payment,
-        remaining_amount: totalAmount - values.down_payment,
-        monthly_payment: monthlyPayment,
+        total_amount: computedTotal,
+        down_payment: computedDownPayment,
+        remaining_amount: computedRemaining,
+        monthly_payment: computedMonthly,
         total_months: values.total_months,
         paid_months: 0,
         start_date: new Date().toISOString(),

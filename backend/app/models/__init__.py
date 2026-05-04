@@ -7,11 +7,10 @@ from . import (
     category,
     stock_movement,
     alert,
-    payment,
     purchase,
-    installment_payment,
     sales_invoice,
     installment_sales,
+    notification,
 )
 
-__all__ = ["User", "Category", "Item", "StockMovement", "Alert", "Payment", "Purchase", "PurchaseItem", "InstallmentPayment", "SalesInvoice", "SalesInvoiceItem", "InstallmentSale", "InstallmentSaleItem", "InstallmentSalePayment"]
+__all__ = ["User", "Category", "Item", "StockMovement", "Alert", "Purchase", "PurchaseItem", "SalesInvoice", "SalesInvoiceItem", "InstallmentSale", "InstallmentSaleItem", "InstallmentSalePayment", "Notification"]

@@ -11,8 +11,9 @@ import StatCards from '../components/dashboard/StatCards';
 import InventoryCharts from '../components/dashboard/InventoryCharts';
 import ActionableInsights from '../components/dashboard/ActionableInsights';
 import FinancialSummary from '../components/dashboard/FinancialSummary';
+import QuickAccessCards from '../components/dashboard/QuickAccessCards';
 
-const INITIAL_STATS = { totalItems: 0, lowStock: 0, activeAlerts: 0, totalDebt: 0, totalPaid: 0 };
+const INITIAL_STATS = { totalItems: 0, lowStock: 0, activeAlerts: 0, totalSales: 0, totalCollected: 0, totalPaid: 0, totalDebt: 0 };
 
 const Dashboard = () => {
   const { t, i18n } = useTranslation();
@@ -23,13 +24,12 @@ const Dashboard = () => {
   const [error, setError] = useState(null);
 
   const formatCurrency = useCallback((amount) => {
-    const locale = i18n.language === 'ar' ? 'ar-SA' : 'en-US';
-    return new Intl.NumberFormat(locale, {
+    const numAmount = parseFloat(amount) || 0;
+    return new Intl.NumberFormat('en-US', {
       style: 'currency', currency: 'IQD',
       minimumFractionDigits: 0, maximumFractionDigits: 0,
-      numberingSystem: 'latn',
-    }).format(amount);
-  }, [i18n.language]);
+    }).format(numAmount);
+  }, []);
 
   const loadDashboardData = useCallback(async (isRefresh = false) => {
     try {
@@ -37,19 +37,31 @@ const Dashboard = () => {
       else setLoading(true);
       setError(null);
 
-      const [stockLevels, alerts, debtSummary, paidSummary] = await Promise.all([
+      const [stockLevels, alerts, installmentSales] = await Promise.all([
         apiService.getStockLevels(),
         apiService.getAlerts(),
-        apiService.getTotalDebt(),
-        apiService.getTotalPaid(),
+        apiService.getInstallmentSales(),
       ]);
+
+      // Calculate totals from installment sales
+      const totalSales = installmentSales.reduce((sum, sale) => sum + sale.total_amount, 0);
+      const totalCollected = installmentSales.reduce((sum, sale) => sum + (sale.total_amount - sale.remaining_amount), 0);
+      
+      // Calculate total paid and total debt
+      const totalPaid = installmentSales.reduce((sum, sale) => {
+        const paidAmount = sale.total_amount - sale.remaining_amount;
+        return sum + paidAmount;
+      }, 0);
+      const totalDebt = installmentSales.reduce((sum, sale) => sum + sale.remaining_amount, 0);
 
       setStats({
         totalItems: stockLevels.length,
         lowStock: stockLevels.filter((i) => i.current_stock <= i.min_stock_level).length,
         activeAlerts: alerts.length,
-        totalDebt: debtSummary.total_debt,
-        totalPaid: paidSummary.total_paid,
+        totalSales,
+        totalCollected,
+        totalPaid,
+        totalDebt,
       });
     } catch (err) {
       addToast(`${t('dashboard.errorLoading')}: ${err.message}`, 'error');
@@ -93,6 +105,7 @@ const Dashboard = () => {
   return (
     <div className="page">
       <DashboardHeader onRefresh={() => loadDashboardData(true)} loading={refreshing} />
+      <QuickAccessCards />
       <StatCards stats={stats} formatCurrency={formatCurrency} />
       <InventoryCharts />
       <ActionableInsights />

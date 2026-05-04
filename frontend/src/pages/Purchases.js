@@ -22,18 +22,7 @@ const Purchases = () => {
   const [selectedPurchase, setSelectedPurchase] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
-  const [confirmDeletePaymentId, setConfirmDeletePaymentId] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [installmentPayments, setInstallmentPayments] = useState([]);
-  const [showPaymentForm, setShowPaymentForm] = useState(false);
-  const [paymentFormData, setPaymentFormData] = useState({
-    customer_name: '',
-    customer_phone: '',
-    amount: '',
-    payment_method: 'cash',
-    reference_number: '',
-    notes: ''
-  });
 
   const [formData, setFormData] = useState({
     supplier_name: '',
@@ -66,12 +55,13 @@ const Purchases = () => {
     loadPurchases();
   }, [filter]);
 
-  const loadInstallmentPayments = async (purchaseId) => {
+  const loadPurchasePayments = async (purchaseId) => {
     try {
-      const payments = await apiService.getInstallmentPayments(purchaseId);
-      setInstallmentPayments(payments);
+      const purchase = await apiService.getPurchase(purchaseId);
+      // For now, just show the purchase details
+      // In a real implementation, you'd need a backend endpoint to get payment history
     } catch (error) {
-      console.error('Error loading installment payments:', error);
+      console.error('Error loading purchase:', error);
     }
   };
 
@@ -119,9 +109,15 @@ const Purchases = () => {
     setIsEditing(true);
   };
 
-  const handleViewPayments = (purchase) => {
-    setSelectedPurchase(purchase);
-    loadInstallmentPayments(purchase.id);
+  const handleMakePayment = async (purchaseId, amount) => {
+    try {
+      await apiService.makePurchasePayment(purchaseId, amount);
+      addToast('تم تسجيل الدفعة بنجاح', 'success');
+      loadPurchases();
+    } catch (error) {
+      console.error('Error making payment:', error);
+      addToast('فشل تسجيل الدفعة: ' + error.message, 'error');
+    }
   };
 
   const handleSave = async (e) => {
@@ -134,7 +130,7 @@ const Purchases = () => {
         paid_amount: parseFloat(formData.paid_amount) || 0,
         remaining_amount: parseFloat(formData.total_amount) - (parseFloat(formData.paid_amount) || 0),
         purchase_date: new Date(formData.purchase_date).toISOString(),
-        status: 'pending'
+        status: editingPurchase ? editingPurchase.status : 'pending'
       };
 
       if (editingPurchase) {
@@ -154,56 +150,6 @@ const Purchases = () => {
     }
   };
 
-  const handleMakePayment = async (e) => {
-    e.preventDefault();
-    if (!selectedPurchase) return;
-
-    try {
-      const paymentData = {
-        purchase_id: selectedPurchase.id,
-        customer_name: paymentFormData.customer_name || selectedPurchase.supplier_name,
-        customer_phone: paymentFormData.customer_phone,
-        amount: parseFloat(paymentFormData.amount),
-        payment_method: paymentFormData.payment_method,
-        reference_number: paymentFormData.reference_number,
-        notes: paymentFormData.notes
-      };
-
-      await apiService.createInstallmentPayment(paymentData);
-      addToast('تم تسجيل الدفعة بنجاح', 'success');
-      setShowPaymentForm(false);
-      setPaymentFormData({
-        customer_name: '',
-        customer_phone: '',
-        amount: '',
-        payment_method: 'cash',
-        reference_number: '',
-        notes: ''
-      });
-      loadInstallmentPayments(selectedPurchase.id);
-      loadPurchases();
-    } catch (error) {
-      console.error('Error making payment:', error);
-      addToast('فشل تسجيل الدفعة: ' + error.message, 'error');
-    }
-  };
-
-  const handleDeletePayment = async () => {
-    if (!confirmDeletePaymentId) return;
-    setIsDeleting(true);
-    try {
-      await apiService.deleteInstallmentPayment(confirmDeletePaymentId);
-      addToast('تم حذف الدفعة بنجاح', 'success');
-      if (selectedPurchase) loadInstallmentPayments(selectedPurchase.id);
-      loadPurchases();
-    } catch (error) {
-      console.error('Error deleting payment:', error);
-    } finally {
-      setIsDeleting(false);
-      setConfirmDeletePaymentId(null);
-    }
-  };
-
   const handleDelete = async () => {
     if (!confirmDeleteId) return;
     setIsDeleting(true);
@@ -212,7 +158,7 @@ const Purchases = () => {
       addToast('تم حذف السجل بنجاح', 'success');
       loadPurchases();
     } catch (error) {
-      console.error('Error deleting purchase:', error);
+      addToast('فشل حذف السجل: ' + error.message, 'error');
     } finally {
       setIsDeleting(false);
       setConfirmDeleteId(null);
@@ -280,21 +226,11 @@ const Purchases = () => {
       accessor: 'actions',
       render: (row) => (
         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-          {row.payment_method === 'installment' && (
-            <Button
-              onClick={() => handleViewPayments(row)}
-              className="btn-info"
-              style={{ padding: '0.25rem 0.5rem', fontSize: '0.875rem' }}
-            >
-              {t('purchases.paymentHistory')}
-            </Button>
-          )}
           {row.remaining_amount > 0 && row.status === 'pending' && (
             <Button
               onClick={() => {
-                setSelectedPurchase(row);
-                setShowPaymentForm(true);
-                setPaymentFormData({ ...paymentFormData, customer_name: row.supplier_name });
+                const amount = prompt('أدخل مبلغ الدفعة:', row.remaining_amount);
+                if (amount) handleMakePayment(row.id, parseFloat(amount));
               }}
               className="btn-success"
               style={{ padding: '0.25rem 0.5rem', fontSize: '0.875rem' }}
@@ -317,45 +253,6 @@ const Purchases = () => {
             {t('common.delete')}
           </Button>
         </div>
-      ),
-    },
-  ];
-
-  const paymentHistoryColumns = [
-    {
-      header: t('purchases.paymentDate'),
-      accessor: 'payment_date',
-      render: (row) => new Date(row.payment_date).toLocaleDateString(i18n.language === 'ar' ? 'ar-SA' : 'en-US')
-    },
-    {
-      header: t('purchases.customerName'),
-      accessor: 'customer_name'
-    },
-    {
-      header: t('purchases.amount'),
-      accessor: 'amount',
-      render: (row) => formatCurrency(row.amount)
-    },
-    {
-      header: t('purchases.paymentMethod'),
-      accessor: 'payment_method'
-    },
-    {
-      header: t('purchases.reference'),
-      accessor: 'reference_number',
-      render: (row) => row.reference_number || '-'
-    },
-    {
-      header: t('common.actions'),
-      accessor: 'actions',
-      render: (row) => (
-        <Button
-          onClick={() => setConfirmDeletePaymentId(row.id)}
-          className="btn-danger"
-          style={{ padding: '0.25rem 0.5rem', fontSize: '0.875rem' }}
-        >
-          {t('common.delete')}
-        </Button>
       ),
     },
   ];
@@ -445,76 +342,6 @@ const Purchases = () => {
         </div>
       )}
 
-      {/* ── Payment History Panel ── */}
-      {selectedPurchase && !isEditing && (
-        <div style={{ background: 'var(--color-card-background)', borderRadius: '20px', border: '2px solid #2ecc7140', boxShadow: '0 4px 24px rgba(46,204,113,0.08)', padding: '1.75rem', marginBottom: '1.5rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              <div style={{ width: 36, height: 36, borderRadius: '10px', background: '#2ecc7118', color: '#2ecc71', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><FaCheckCircle size={14} /></div>
-              <div>
-                <h3 style={{ margin: 0, fontWeight: 700, fontSize: '1rem', color: 'var(--color-text)' }}>{t('purchases.paymentHistory')}</h3>
-                <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>
-                  {selectedPurchase.supplier_name} · {t('purchases.remaining')}: <span style={{ color: '#e74c3c', fontWeight: 600 }}>{formatCurrency(selectedPurchase.remaining_amount)}</span>
-                </p>
-              </div>
-            </div>
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              {selectedPurchase.remaining_amount > 0 && !showPaymentForm && (
-                <button onClick={() => setShowPaymentForm(true)} style={{ background: '#2ecc71', color: '#fff', border: 'none', padding: '0.5rem 1.1rem', borderRadius: '10px', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                  <FaPlus size={11} /> {t('purchases.addPayment')}
-                </button>
-              )}
-              {showPaymentForm && (
-                <button onClick={() => setShowPaymentForm(false)} style={{ background: 'var(--color-surface)', color: 'var(--color-text-muted)', border: '1px solid var(--color-border-light)', padding: '0.5rem 1.1rem', borderRadius: '10px', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem' }}>
-                  {t('common.cancel')}
-                </button>
-              )}
-              <button onClick={() => { setSelectedPurchase(null); setInstallmentPayments([]); setShowPaymentForm(false); }} style={{ background: 'var(--color-surface)', color: 'var(--color-text-muted)', border: '1px solid var(--color-border-light)', padding: '0.5rem 1rem', borderRadius: '10px', cursor: 'pointer', fontWeight: 700, fontSize: '1rem' }}>✕</button>
-            </div>
-          </div>
-
-          {showPaymentForm && (
-            <form onSubmit={handleMakePayment} style={{ marginBottom: '1.25rem', padding: '1.25rem', background: 'var(--color-surface)', borderRadius: '14px', border: '1px solid var(--color-border-light)' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.75rem', marginBottom: '0.75rem' }}>
-                <FormField label={t('purchases.customerName')} name="customer_name" type="text" value={paymentFormData.customer_name} onChange={(e) => setPaymentFormData({ ...paymentFormData, customer_name: e.target.value })} required />
-                <FormField label={t('purchases.customerPhone')} name="customer_phone" type="text" value={paymentFormData.customer_phone} onChange={(e) => setPaymentFormData({ ...paymentFormData, customer_phone: e.target.value })} />
-                <FormField label={t('purchases.amount')} name="amount" type="number" value={paymentFormData.amount} onChange={(e) => setPaymentFormData({ ...paymentFormData, amount: e.target.value })} required min="0" step="0.01" help={t('purchases.remaining') + ': ' + formatCurrency(selectedPurchase.remaining_amount)} />
-                <FormField label={t('purchases.paymentMethod')} name="payment_method" type="select" value={paymentFormData.payment_method} onChange={(e) => setPaymentFormData({ ...paymentFormData, payment_method: e.target.value })}>
-                  <option value="cash">{t('purchases.cash')}</option>
-                  <option value="bank_transfer">{t('purchases.bankTransfer')}</option>
-                </FormField>
-                <FormField label={t('purchases.reference')} name="reference_number" type="text" value={paymentFormData.reference_number} onChange={(e) => setPaymentFormData({ ...paymentFormData, reference_number: e.target.value })} />
-                <FormField label={t('purchases.notes')} name="notes" type="textarea" value={paymentFormData.notes} onChange={(e) => setPaymentFormData({ ...paymentFormData, notes: e.target.value })} rows={2} />
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                <button type="submit" style={{ background: '#2ecc71', color: '#fff', border: 'none', padding: '0.55rem 1.5rem', borderRadius: '10px', cursor: 'pointer', fontWeight: 700, fontSize: '0.875rem' }}>{t('purchases.addPayment')}</button>
-              </div>
-            </form>
-          )}
-
-          {installmentPayments.length === 0 && !showPaymentForm ? (
-            <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--color-text-muted)', fontSize: '0.9rem' }}>{t('purchases.noPayments')}</div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              {installmentPayments.map((pay) => (
-                <div key={pay.id} style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '0.85rem 1rem', background: 'var(--color-surface)', borderRadius: '12px', border: '1px solid var(--color-border-light)' }}>
-                  <div style={{ width: 36, height: 36, borderRadius: '10px', background: '#2ecc7115', color: '#2ecc71', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><FaCheckCircle size={14} /></div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--color-text)' }}>{pay.customer_name}</div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
-                      {new Date(pay.payment_date).toLocaleDateString(i18n.language === 'ar' ? 'ar-SA' : 'en-US')} · {pay.payment_method}
-                      {pay.reference_number && ` · #${pay.reference_number}`}
-                    </div>
-                  </div>
-                  <div style={{ fontWeight: 700, color: '#2ecc71', fontSize: '1rem', flexShrink: 0 }}>{formatCurrency(pay.amount)}</div>
-                  <button onClick={() => setConfirmDeletePaymentId(pay.id)} style={{ width: 30, height: 30, borderRadius: '8px', background: '#e74c3c12', border: '1px solid #e74c3c30', color: '#e74c3c', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', flexShrink: 0 }}>✕</button>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
       {/* ── Purchases Table ── */}
       <div style={{ background: 'var(--color-card-background)', borderRadius: '20px', border: '1px solid var(--color-border-light)', boxShadow: 'var(--shadow-card)', overflow: 'hidden' }}>
         {/* Filter Bar */}
@@ -583,13 +410,8 @@ const Purchases = () => {
                       </td>
                       <td style={{ padding: '1rem' }}>
                         <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'nowrap' }}>
-                          {row.payment_method === 'installment' && (
-                            <button onClick={() => handleViewPayments(row)} style={{ padding: '0.35rem 0.65rem', borderRadius: '8px', background: '#3498db15', color: '#3498db', border: '1px solid #3498db30', cursor: 'pointer', fontSize: '0.72rem', fontWeight: 600, whiteSpace: 'nowrap' }}>
-                              {t('purchases.paymentHistory')}
-                            </button>
-                          )}
                           {row.remaining_amount > 0 && row.status === 'pending' && (
-                            <button onClick={() => { setSelectedPurchase(row); setShowPaymentForm(true); setPaymentFormData({ ...paymentFormData, customer_name: row.supplier_name }); }} style={{ padding: '0.35rem 0.65rem', borderRadius: '8px', background: '#2ecc7115', color: '#2ecc71', border: '1px solid #2ecc7130', cursor: 'pointer', fontSize: '0.72rem', fontWeight: 600 }}>
+                            <button onClick={() => { const amount = prompt('أدخل مبلغ الدفعة:', row.remaining_amount); if (amount) handleMakePayment(row.id, parseFloat(amount)); }} style={{ padding: '0.35rem 0.65rem', borderRadius: '8px', background: '#2ecc7115', color: '#2ecc71', border: '1px solid #2ecc7130', cursor: 'pointer', fontSize: '0.72rem', fontWeight: 600 }}>
                               {t('purchases.pay')}
                             </button>
                           )}
@@ -607,7 +429,6 @@ const Purchases = () => {
       </div>
 
       <ConfirmDialog isOpen={!!confirmDeleteId} title="حذف سجل المشتريات" message="هل أنت متأكد من حذف هذا السجل؟ لا يمكن التراجع عن هذا الإجراء." confirmLabel="حذف" cancelLabel={t('common.cancel')} variant="danger" loading={isDeleting} onConfirm={handleDelete} onCancel={() => setConfirmDeleteId(null)} />
-      <ConfirmDialog isOpen={!!confirmDeletePaymentId} title="حذف الدفعة" message="هل أنت متأكد من حذف هذه الدفعة؟ لا يمكن التراجع عن هذا الإجراء." confirmLabel="حذف" cancelLabel={t('common.cancel')} variant="danger" loading={isDeleting} onConfirm={handleDeletePayment} onCancel={() => setConfirmDeletePaymentId(null)} />
     </div>
   );
 };

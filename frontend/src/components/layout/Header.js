@@ -1,12 +1,25 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../context/ThemeContext';
-import { FaSun, FaMoon, FaBars, FaTimes } from 'react-icons/fa';
+import { FaSun, FaMoon, FaBars, FaTimes, FaSearch, FaBolt, FaPlus } from 'react-icons/fa';
+import GlobalSearch from '../common/GlobalSearch';
 
-const Header = () => {
+const Header = ({ onOpenQuickEntry }) => {
   const { t, i18n } = useTranslation();
   const { isDark, toggleTheme } = useTheme();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        setSearchOpen(true);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const changeLanguage = (lng) => {
     i18n.changeLanguage(lng);
@@ -52,6 +65,55 @@ const Header = () => {
           <h1 style={{ margin: 0 }}>{t('nav.dashboard')}</h1>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <button
+            onClick={onOpenQuickEntry}
+            style={{
+              ...iconBtnStyle,
+              width: 'auto',
+              padding: '0.5rem 1rem',
+              minWidth: '120px',
+              justifyContent: 'start',
+              gap: '0.5rem',
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              border: 'none',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'scale(1.02)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'scale(1)';
+            }}
+            title="إدخال سريع (Ctrl+Shift+Q)"
+          >
+            <FaBolt size={14} />
+            <FaPlus size={12} />
+            <span style={{ fontSize: '0.875rem' }}>إدخال سريع</span>
+          </button>
+
+          <button
+            onClick={() => setSearchOpen(true)}
+            style={{
+              ...iconBtnStyle,
+              width: 'auto',
+              padding: '0.5rem 1rem',
+              minWidth: '120px',
+              justifyContent: 'start',
+              gap: '0.5rem',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.18)';
+              e.currentTarget.style.transform = 'scale(1.02)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)';
+              e.currentTarget.style.transform = 'scale(1)';
+            }}
+            title="بحث (Ctrl+K)"
+          >
+            <FaSearch size={14} />
+            <span style={{ fontSize: '0.875rem' }}>بحث...</span>
+          </button>
+
           <button
             onClick={() => changeLanguage(i18n.language === 'ar' ? 'en' : 'ar')}
             style={{
@@ -105,6 +167,8 @@ const Header = () => {
           </nav>
         </div>
       </div>
+
+      <GlobalSearch isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
     </header>
   );
 };

@@ -5,20 +5,54 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'app'))
 from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 from app.database import SessionLocal
-from app.models import item, installment_sales
+from app.models import item, category, installment_sales
 
 def add_test_data():
     db = SessionLocal()
     try:
-        print("Adding test installment sales...")
+        print("Adding test data...")
         
-        # Get some items
-        items_list = db.query(item.Item).all()
-        if not items_list:
-            print("No items found. Please create items first.")
-            return
+        # Create categories first
+        categories = []
+        category_names = ["إلكترونيات", "ملابس", "أدوات منزلية", "مستحضرات تجميل", "أحذية"]
+        for cat_name in category_names:
+            cat = category.Category(
+                name=cat_name,
+                description=f"فئة {cat_name}"
+            )
+            db.add(cat)
+            db.commit()
+            db.refresh(cat)
+            categories.append(cat)
+        
+        print(f"Created {len(categories)} categories")
+        
+        # Create items
+        items_data = [
+            {"name": "لابتوب HP", "sku": "LAP001", "price": 1200000, "category_id": categories[0].id, "current_stock": 15, "min_stock_level": 5},
+            {"name": "هاتف سامسونج", "sku": "PHN001", "price": 450000, "category_id": categories[0].id, "current_stock": 20, "min_stock_level": 10},
+            {"name": "تيشيرت قطن", "sku": "CLT001", "price": 25000, "category_id": categories[1].id, "current_stock": 50, "min_stock_level": 20},
+            {"name": "بنطلون جينز", "sku": "JEAN001", "price": 35000, "category_id": categories[1].id, "current_stock": 30, "min_stock_level": 15},
+            {"name": "غسالة سامسونج", "sku": "WASH001", "price": 750000, "category_id": categories[2].id, "current_stock": 8, "min_stock_level": 3},
+            {"name": "ثلاجة LG", "sku": "FRIDGE001", "price": 950000, "category_id": categories[2].id, "current_stock": 6, "min_stock_level": 2},
+            {"name": "كريم الوجه", "sku": "CRM001", "price": 45000, "category_id": categories[3].id, "current_stock": 40, "min_stock_level": 15},
+            {"name": "صابون طبيعي", "sku": "SOAP001", "price": 12000, "category_id": categories[3].id, "current_stock": 60, "min_stock_level": 25},
+            {"name": "حذاء رياضي", "sku": "SHOE001", "price": 55000, "category_id": categories[4].id, "current_stock": 25, "min_stock_level": 10},
+            {"name": "حذاء كلاسيك", "sku": "SHOE002", "price": 85000, "category_id": categories[4].id, "current_stock": 18, "min_stock_level": 8},
+        ]
+        
+        items_list = []
+        for item_data in items_data:
+            new_item = item.Item(**item_data)
+            db.add(new_item)
+            db.commit()
+            db.refresh(new_item)
+            items_list.append(new_item)
+        
+        print(f"Created {len(items_list)} items")
         
         # Create 3 overdue installment sales
+        print("Adding overdue installment sales...")
         for i in range(3):
             sale_item = items_list[i % len(items_list)]
             start_date = datetime.now() - timedelta(days=60)
@@ -41,6 +75,7 @@ def add_test_data():
             )
             db.add(installment)
             db.commit()
+            db.refresh(installment)
             
             # Add item to the installment sale
             sale_item_data = installment_sales.InstallmentSaleItem(
@@ -59,6 +94,7 @@ def add_test_data():
         print("Created 3 overdue installment sales successfully!")
         
         # Create 2 active (not overdue) installment sales
+        print("Adding active installment sales...")
         for i in range(2):
             sale_item = items_list[(i + 3) % len(items_list)]
             start_date = datetime.now()
@@ -81,6 +117,7 @@ def add_test_data():
             )
             db.add(installment)
             db.commit()
+            db.refresh(installment)
             
             # Add item to the installment sale
             sale_item_data = installment_sales.InstallmentSaleItem(
@@ -98,6 +135,7 @@ def add_test_data():
         
         print("Created 2 active installment sales successfully!")
         print("Total: 3 overdue + 2 active = 5 installment sales")
+        print("\nTest data added successfully!")
         
     except Exception as e:
         print(f"Error: {e}")

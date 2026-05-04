@@ -1,21 +1,21 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { FaInbox } from 'react-icons/fa';
 
-const Table = ({ columns, data, className = '', emptyMessage = 'لا توجد بيانات للعرض' }) => {
+const Table = memo(({ columns, data, className = '', emptyMessage = 'لا توجد بيانات للعرض' }) => {
   if (!data || data.length === 0) {
     return (
-      <div className="table-container">
-        <table className={`table ${className}`}>
+      <div className="table-container" role="region" aria-label="جدول البيانات">
+        <table className={`table ${className}`} aria-label={emptyMessage}>
           <thead>
             <tr>
               {columns.map((col, index) => (
-                <th key={index} style={{ textAlign: 'right', fontWeight: 'bold' }}>{col.header}</th>
+                <th key={index} style={{ textAlign: 'right', fontWeight: 'bold' }} scope="col">{col.header}</th>
               ))}
             </tr>
           </thead>
         </table>
-        <div className="table-empty-state">
-          <div className="table-empty-icon"><FaInbox /></div>
+        <div className="table-empty-state" role="status" aria-live="polite">
+          <div className="table-empty-icon" aria-hidden="true"><FaInbox /></div>
           <p className="table-empty-msg">{emptyMessage}</p>
         </div>
       </div>
@@ -23,12 +23,12 @@ const Table = ({ columns, data, className = '', emptyMessage = 'لا توجد ب
   }
 
   return (
-    <div className="table-container">
+    <div className="table-container" role="region" aria-label="جدول البيانات">
       <table className={`table ${className}`}>
         <thead>
           <tr>
             {columns.map((col, index) => (
-              <th key={index} style={{ textAlign: 'right', fontWeight: 'bold' }}>{col.header}</th>
+              <th key={index} style={{ textAlign: 'right', fontWeight: 'bold' }} scope="col">{col.header}</th>
             ))}
           </tr>
         </thead>
@@ -46,6 +46,6 @@ const Table = ({ columns, data, className = '', emptyMessage = 'لا توجد ب
       </table>
     </div>
   );
-};
+});
 
 export default Table;

@@ -17,8 +17,11 @@ from app.models import (
     category,
     stock_movement,
     alert,
-    payment,
-)  # Import all models
+    purchase,
+    sales_invoice,
+    installment_sales,
+    notification,
+)
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

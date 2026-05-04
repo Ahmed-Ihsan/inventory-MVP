@@ -184,52 +184,6 @@ class ApiService {
     });
   }
 
-  // Payments methods
-  async getPayments(filters = {}) {
-    const params = new URLSearchParams(filters);
-    return this.apiCall(`/payments/?${params}`);
-  }
-
-  async getPayment(paymentId) {
-    return this.apiCall(`/payments/${paymentId}`);
-  }
-
-  async createPayment(paymentData) {
-    return this.apiCall('/payments/', {
-      method: 'POST',
-      body: JSON.stringify(paymentData)
-    });
-  }
-
-  async updatePayment(paymentId, paymentData) {
-    return this.apiCall(`/payments/${paymentId}`, {
-      method: 'PUT',
-      body: JSON.stringify(paymentData)
-    });
-  }
-
-  async deletePayment(paymentId) {
-    return this.apiCall(`/payments/${paymentId}`, {
-      method: 'DELETE'
-    });
-  }
-
-  async getTotalDebt(userId = null) {
-    const params = userId ? `?user_id=${userId}` : '';
-    return this.apiCall(`/payments/summary/debt${params}`);
-  }
-
-  async getTotalPaid(userId = null) {
-    const params = userId ? `?user_id=${userId}` : '';
-    return this.apiCall(`/payments/summary/paid${params}`);
-  }
-
-  async checkOverduePayments() {
-    return this.apiCall('/payments/check-overdue', {
-      method: 'POST'
-    });
-  }
-
   // Purchase methods
   async getPurchases(filters = {}) {
     const params = new URLSearchParams(filters);
@@ -268,24 +222,6 @@ class ApiService {
 
   async getPurchaseSummary() {
     return this.apiCall('/purchases/summary');
-  }
-
-  // Installment Payment methods
-  async getInstallmentPayments(purchaseId) {
-    return this.apiCall(`/installment-payments/purchase/${purchaseId}`);
-  }
-
-  async createInstallmentPayment(paymentData) {
-    return this.apiCall('/installment-payments/', {
-      method: 'POST',
-      body: JSON.stringify(paymentData)
-    });
-  }
-
-  async deleteInstallmentPayment(paymentId) {
-    return this.apiCall(`/installment-payments/${paymentId}`, {
-      method: 'DELETE'
-    });
   }
 
   // Sales Invoice methods
@@ -357,6 +293,78 @@ class ApiService {
 
   async getInstallmentSalePayments(saleId) {
     return this.apiCall(`/installment-sales/${saleId}/payments`);
+  }
+
+  async getPaymentReceipt(saleId, paymentId) {
+    return this.apiCall(`/installment-sales/${saleId}/payments/${paymentId}/receipt`);
+  }
+
+  async refundPayment(saleId, paymentId, reason = null) {
+    return this.apiCall(`/installment-sales/${saleId}/payments/${paymentId}/refund?reason=${reason || ''}`, {
+      method: 'POST'
+    });
+  }
+
+  async exportPaymentHistory(saleId) {
+    const url = `${this.baseURL}/installment-sales/${saleId}/payments/export`;
+    const response = await fetch(url, {
+      headers: this.getAuthHeaders(),
+    });
+
+    if (response.status === 401) {
+      localStorage.removeItem('auth_token');
+      window.location.href = '/login';
+      throw new Error('Authentication required');
+    }
+
+    if (!response.ok) {
+      throw new Error('Export failed');
+    }
+
+    return response.blob();
+  }
+
+  async getInstallmentSalesSummary() {
+    return this.apiCall('/installment-sales/summary');
+  }
+
+  async getSalesInvoicesSummary() {
+    return this.apiCall('/sales-invoices/summary');
+  }
+
+  // Notifications methods
+  async getNotifications() {
+    return this.apiCall('/notifications/');
+  }
+
+  async checkDuePayments() {
+    return this.apiCall('/notifications/check-due-payments', {
+      method: 'POST'
+    });
+  }
+
+  async checkOverduePayments() {
+    return this.apiCall('/notifications/check-overdue-payments', {
+      method: 'POST'
+    });
+  }
+
+  async markNotificationAsRead(notificationId) {
+    return this.apiCall(`/notifications/${notificationId}/read`, {
+      method: 'PUT'
+    });
+  }
+
+  async markAllNotificationsAsRead() {
+    return this.apiCall('/notifications/read-all', {
+      method: 'PUT'
+    });
+  }
+
+  async deleteNotification(notificationId) {
+    return this.apiCall(`/notifications/${notificationId}`, {
+      method: 'DELETE'
+    });
   }
 
   // Barcode scanning method

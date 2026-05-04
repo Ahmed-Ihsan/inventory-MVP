@@ -6,11 +6,10 @@ from .models import (
     category,
     stock_movement,
     alert,
-    payment,
     purchase,
-    installment_payment,
     sales_invoice,
     installment_sales,
+    notification,
 )
 from .routers import (
     auth,
@@ -19,11 +18,10 @@ from .routers import (
     stock,
     scanning,
     alerts,
-    payments,
     purchases,
-    installment_payments,
     sales_invoices,
     installment_sales as installment_sales_router,
+    notifications,
 )
 from .middleware.cors import create_cors_middleware
 
@@ -34,11 +32,10 @@ item.Base.metadata.create_all(bind=engine)
 category.Base.metadata.create_all(bind=engine)
 stock_movement.Base.metadata.create_all(bind=engine)
 alert.Base.metadata.create_all(bind=engine)
-payment.Base.metadata.create_all(bind=engine)
 purchase.Base.metadata.create_all(bind=engine)
-installment_payment.Base.metadata.create_all(bind=engine)
 sales_invoice.Base.metadata.create_all(bind=engine)
 installment_sales.Base.metadata.create_all(bind=engine)
+notification.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Inventory Management API")
 
@@ -53,21 +50,18 @@ app.include_router(stock.router, prefix="/stock", tags=["stock"])
 app.include_router(scanning.router, prefix="/scanning", tags=["scanning"])
 app.include_router(
     alerts.router, prefix="/alerts", tags=["alerts"]
-)  # Include alerts router
-app.include_router(
-    payments.router, prefix="/payments", tags=["payments"]
-)  # Include payments router
+)
 app.include_router(
     purchases.router, prefix="/purchases", tags=["purchases"]
-)  # Include purchases router
-app.include_router(
-    installment_payments.router, prefix="/installment-payments", tags=["installment-payments"]
 )
 app.include_router(
     sales_invoices.router, prefix="/sales-invoices", tags=["sales-invoices"]
 )
 app.include_router(
     installment_sales_router.router, prefix="/installment-sales", tags=["installment-sales"]
+)
+app.include_router(
+    notifications.router, prefix="/notifications", tags=["notifications"]
 )
 
 

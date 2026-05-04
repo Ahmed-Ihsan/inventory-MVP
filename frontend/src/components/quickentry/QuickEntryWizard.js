@@ -125,9 +125,8 @@ const REVIEW_LABELS = {
 };
 
 // ─── Component ─────────────────────────────────────────────────────────────────
-const QuickEntryWizard = () => {
+const QuickEntryWizard = ({ isOpen, onClose, onOpen }) => {
   const { addToast } = useToast();
-  const [isOpen, setIsOpen] = useState(false);
   const [selectedType, setSelectedType] = useState(null);
   const [step, setStep] = useState(0);
   const [values, setValues] = useState({});
@@ -142,13 +141,13 @@ const QuickEntryWizard = () => {
     const handler = (e) => {
       if (e.ctrlKey && e.shiftKey && e.key === 'Q') {
         e.preventDefault();
-        setIsOpen((v) => !v);
+        onOpen();
       }
-      if (e.key === 'Escape' && isOpen) close();
+      if (e.key === 'Escape' && isOpen) onClose();
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [isOpen]);
+  }, [isOpen, onOpen, onClose]);
 
   // Scroll lock + load data
   useEffect(() => {
@@ -161,13 +160,13 @@ const QuickEntryWizard = () => {
   }, [isOpen]);
 
   const close = useCallback(() => {
-    setIsOpen(false);
+    onClose();
     setSelectedType(null);
     setStep(0);
     setValues({});
     setErrors({});
     setAnimate('');
-  }, []);
+  }, [onClose]);
 
   const transition = (dir, fn) => {
     setAnimate(dir === 'next' ? 'slide-out-left' : 'slide-out-right');
@@ -540,45 +539,6 @@ const QuickEntryWizard = () => {
 
   return (
     <>
-      {/* ── Floating Action Button ── */}
-      <button
-        className="qe-fab"
-        onClick={() => { setIsOpen(true); setSelectedType(null); setStep(0); }}
-        aria-label="إدخال سريع"
-        title="إدخال سريع — Ctrl+Shift+Q"
-        style={{
-          position: 'fixed',
-          bottom: '2rem',
-          right: '2rem',
-          padding: '1rem 1.5rem',
-          borderRadius: '16px',
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-          color: '#fff',
-          border: 'none',
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.75rem',
-          fontWeight: 700,
-          fontSize: '0.95rem',
-          boxShadow: '0 12px 40px rgba(102,126,234,0.4)',
-          transition: 'all 0.3s ease',
-          zIndex: 1000,
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.transform = 'translateY(-4px)';
-          e.currentTarget.style.boxShadow = '0 16px 48px rgba(102,126,234,0.5)';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.transform = 'translateY(0)';
-          e.currentTarget.style.boxShadow = '0 12px 40px rgba(102,126,234,0.4)';
-        }}
-      >
-        <FaBolt size={18} />
-        <FaPlus size={16} />
-        إدخال سريع
-      </button>
-
       {/* ── Wizard Overlay ── */}
       {isOpen && (
         <div 

@@ -22,15 +22,15 @@ class SalesInvoice(Base):
     __tablename__ = "sales_invoices"
 
     id = Column(Integer, primary_key=True, index=True)
-    customer_name = Column(String, nullable=False)
-    customer_phone = Column(String, nullable=True)
+    customer_name = Column(String, nullable=False, index=True)
+    customer_phone = Column(String, nullable=True, index=True)
     total_amount = Column(Float, nullable=False)
     paid_amount = Column(Float, default=0)
     remaining_amount = Column(Float, default=0)
     payment_method = Column(Enum(PaymentMethod), nullable=False)
     notes = Column(String, nullable=True)
-    invoice_date = Column(DateTime, default=datetime.utcnow)
-    status = Column(Enum(InvoiceStatus), default=InvoiceStatus.PENDING)
+    invoice_date = Column(DateTime, default=datetime.utcnow, index=True)
+    status = Column(Enum(InvoiceStatus), default=InvoiceStatus.PENDING, index=True)
 
     # Relationships
     items = relationship("SalesInvoiceItem", back_populates="invoice", cascade="all, delete-orphan")
@@ -44,8 +44,8 @@ class SalesInvoiceItem(Base):
     __tablename__ = "sales_invoice_items"
 
     id = Column(Integer, primary_key=True, index=True)
-    invoice_id = Column(Integer, ForeignKey("sales_invoices.id"), nullable=False)
-    item_id = Column(Integer, ForeignKey("items.id"), nullable=True)
+    invoice_id = Column(Integer, ForeignKey("sales_invoices.id", ondelete="CASCADE"), nullable=False)
+    item_id = Column(Integer, ForeignKey("items.id", ondelete="SET NULL"), nullable=True)
     item_name = Column(String, nullable=False)
     quantity = Column(Integer, nullable=False)
     cost_price = Column(Float, nullable=False)

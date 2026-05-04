@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { memo } from 'react';
 import Button from './Button';
-import { FaBoxOpen, FaSearch, FaExclamationTriangle } from 'react-icons/fa';
+import { FaBoxOpen, FaSearch, FaExclamationTriangle, FaInbox, FaFileInvoice, FaCalendar, FaBox } from 'react-icons/fa';
 
-const EmptyState = ({
+const EmptyState = memo(({
   type = 'default',
   title,
   description,
@@ -34,9 +34,30 @@ const EmptyState = ({
           description: description || 'حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.',
           actionLabel: actionLabel || 'إعادة المحاولة',
         };
+      case 'no-items':
+        return {
+          icon: <FaBox size={48} color="var(--color-gray)" />,
+          title: title || 'لا توجد أصناف',
+          description: description || 'لم يتم إضافة أي أصناف بعد. ابدأ بإضافة صنف جديد.',
+          actionLabel: actionLabel || 'إضافة صنف',
+        };
+      case 'no-invoices':
+        return {
+          icon: <FaFileInvoice size={48} color="var(--color-gray)" />,
+          title: title || 'لا توجد فواتير',
+          description: description || 'لم يتم إصدار أي فواتير بعد.',
+          actionLabel: actionLabel || 'إنشاء فاتورة',
+        };
+      case 'no-sales':
+        return {
+          icon: <FaCalendar size={48} color="var(--color-gray)" />,
+          title: title || 'لا توجد مبيعات',
+          description: description || 'لم يتم تسجيل أي مبيعات بعد.',
+          actionLabel: actionLabel || 'تسجيل بيع',
+        };
       default:
         return {
-          icon: CustomIcon || <FaBoxOpen size={48} color="var(--color-gray)" />,
+          icon: CustomIcon || <FaInbox size={48} color="var(--color-gray)" />,
           title: title || 'لا توجد بيانات',
           description: description || 'لم يتم العثور على أي محتوى.',
           actionLabel: actionLabel || 'ابدأ الآن',
@@ -59,8 +80,10 @@ const EmptyState = ({
         borderRadius: 'var(--border-radius-lg)',
         border: '2px dashed var(--color-border)',
       }}
+      role="status"
+      aria-live="polite"
     >
-      <div style={{ marginBottom: '1.5rem', opacity: 0.7 }}>
+      <div style={{ marginBottom: '1.5rem', opacity: 0.7 }} aria-hidden="true">
         {config.icon}
       </div>
 
@@ -88,12 +111,12 @@ const EmptyState = ({
       </p>
 
       {onAction && (
-        <Button onClick={onAction}>
+        <Button onClick={onAction} aria-label={config.actionLabel}>
           {config.actionLabel}
         </Button>
       )}
     </div>
   );
-};
+});
 
 export default EmptyState;

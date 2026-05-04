@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from typing import List
 from datetime import datetime
 
@@ -24,32 +24,43 @@ def read_sales_invoices(
     payment_method: str = None,
     db: Session = Depends(get_db)
 ):
-    query = db.query(SalesInvoice)
-    if status:
-        query = query.filter(SalesInvoice.status == status)
-    if payment_method:
-        query = query.filter(SalesInvoice.payment_method == payment_method)
-    invoices = query.order_by(SalesInvoice.invoice_date.desc()).offset(skip).limit(limit).all()
-    return invoices
+    try:
+        query = db.query(SalesInvoice).options(joinedload(SalesInvoice.items))
+        if status:
+            query = query.filter(SalesInvoice.status == status)
+        if payment_method:
+            query = query.filter(SalesInvoice.payment_method == payment_method)
+        invoices = query.order_by(SalesInvoice.invoice_date.desc()).offset(skip).limit(limit).all()
+        return invoices
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching sales invoices: {str(e)}")
 
 
 @router.get("/summary", response_model=SalesInvoiceSummary)
 def get_sales_summary(db: Session = Depends(get_db)):
-    invoices = db.query(SalesInvoice).all()
-    return SalesInvoiceSummary(
-        total_invoices=len(invoices),
-        total_amount=sum(inv.total_amount for inv in invoices),
-        total_paid=sum(inv.paid_amount for inv in invoices),
-        total_remaining=sum(inv.remaining_amount for inv in invoices)
-    )
+    try:
+        invoices = db.query(SalesInvoice).all()
+        return SalesInvoiceSummary(
+            total_invoices=len(invoices),
+            total_amount=sum(inv.total_amount for inv in invoices),
+            total_paid=sum(inv.paid_amount for inv in invoices),
+            total_remaining=sum(inv.remaining_amount for inv in invoices)
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching sales summary: {str(e)}")
 
 
 @router.get("/{invoice_id}", response_model=SalesInvoiceResponse)
 def read_sales_invoice(invoice_id: int, db: Session = Depends(get_db)):
-    invoice = db.query(SalesInvoice).filter(SalesInvoice.id == invoice_id).first()
-    if not invoice:
-        raise HTTPException(status_code=404, detail="Sales invoice not found")
-    return invoice
+    try:
+        invoice = db.query(SalesInvoice).options(joinedload(SalesInvoice.items)).filter(SalesInvoice.id == invoice_id).first()
+        if not invoice:
+            raise HTTPException(status_code=404, detail="Sales invoice not found")
+        return invoice
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching sales invoice: {str(e)}")
 
 
 @router.post("/", response_model=SalesInvoiceResponse, status_code=201)
@@ -128,6 +139,14 @@ def delete_sales_invoice(invoice_id: int, db: Session = Depends(get_db)):
     db_invoice = db.query(SalesInvoice).filter(SalesInvoice.id == invoice_id).first()
     if not db_invoice:
         raise HTTPException(status_code=404, detail="Sales invoice not found")
+    
+    # Restore stock for all items in the invoice
+    for item in db_invoice.items:
+        if item.item_id:
+            item_obj = db.query(Item).filter(Item.id == item.item_id).first()
+            if item_obj:
+                item_obj.current_stock += item.quantity
+    
     db.delete(db_invoice)
     db.commit()
     return {"message": "Sales invoice deleted successfully"}

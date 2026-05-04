@@ -12,4 +12,4 @@ class Category(Base):
     description = Column(Text, nullable=True)
 
     # Relationship to items
-    items = relationship("Item", back_populates="category")
+    items = relationship("Item", back_populates="category", cascade="all, delete-orphan")

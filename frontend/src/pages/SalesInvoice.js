@@ -151,7 +151,7 @@ const SalesInvoice = () => {
 
     // Auto-select item name when item_id is selected
     if (field === 'item_id') {
-      const selectedItem = items.find(i => i.id === value);
+      const selectedItem = items.find(i => String(i.id) === String(value));
       if (selectedItem) {
         newItems[index].item_name = selectedItem.name;
         newItems[index].cost_price = selectedItem.price || 0;

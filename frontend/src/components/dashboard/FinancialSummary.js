@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import Button from '../common/Button';
 import {
-  FaCreditCard, FaBell, FaCalendarAlt, FaClock,
+  FaCreditCard, FaBell, FaClock,
   FaPlus, FaExclamationTriangle, FaFileAlt,
 } from 'react-icons/fa';
 import apiService from '../../services/apiService';
@@ -16,35 +16,19 @@ const relativeTime = (dateStr) => {
   return `منذ ${Math.floor(diff / 86400)} يوم`;
 };
 
-const txRowStyle = {
-  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-  padding: '0.875rem 1rem',
-  background: 'var(--color-surface)',
-  borderRadius: 'var(--border-radius-lg)',
-  border: '1px solid var(--color-border-light)',
-};
-
 const FinancialSummary = ({ formatCurrency }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const [transactions, setTransactions] = useState([]);
   const [activityLog, setActivityLog] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const load = async () => {
       try {
-        const [payments, movements, stockLevels] = await Promise.all([
-          apiService.getPayments(),
+        const [movements, stockLevels] = await Promise.all([
           apiService.getStockMovements(),
           apiService.getStockLevels(),
         ]);
-
-        // Recent transactions: last 5 payments by date
-        const sorted = [...payments]
-          .sort((a, b) => new Date(b.transaction_date) - new Date(a.transaction_date))
-          .slice(0, 5);
-        setTransactions(sorted);
 
         // Activity log: last 5 stock movements with item names
         const itemMap = {};
@@ -69,52 +53,6 @@ const FinancialSummary = ({ formatCurrency }) => {
 
   return (
     <div className="dashboard-financials-row">
-      {/* Recent transactions */}
-      <div className="dashboard-card">
-        <div className="card-section-header">
-          <div className="card-section-icon" style={{ background: 'var(--color-success-light)', color: 'var(--color-success)' }}>
-            <FaCreditCard />
-          </div>
-          <h3 className="card-section-title">{t('dashboard.financials.recentTransactions')}</h3>
-        </div>
-        {loading ? (
-          <div style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem', padding: '1rem 0' }}>...</div>
-        ) : transactions.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '2rem 0', color: 'var(--color-text-muted)', fontSize: '0.875rem' }}>
-            لا توجد معاملات مسجلة
-          </div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
-            {transactions.map((tx, i) => (
-              <div key={i} style={txRowStyle}>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontWeight: 600, fontSize: '0.875rem', color: 'var(--color-text)', marginBottom: 3 }}>
-                    {tx.description || t(`dashboard.financials.${tx.payment_type}`)}
-                  </div>
-                  <div style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <FaCalendarAlt size={11} />
-                    {new Date(tx.transaction_date).toLocaleDateString()}
-                  </div>
-                </div>
-                <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                  <div style={{
-                    fontWeight: 700, fontSize: '0.9375rem', marginBottom: 3,
-                    color: tx.payment_type === 'paid' || tx.payment_type === 'credit'
-                      ? 'var(--color-success)' : 'var(--color-danger)',
-                  }}>
-                    {tx.payment_type === 'paid' || tx.payment_type === 'credit' ? '+' : '-'}
-                    {formatCurrency(Math.abs(tx.amount))}
-                  </div>
-                  <span className={`badge badge-${tx.payment_type === 'paid' || tx.payment_type === 'credit' ? 'success' : 'danger'}`}>
-                    {t(`dashboard.financials.${tx.payment_type}`) || tx.payment_type}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
       {/* Quick actions + Activity log */}
       <div className="dashboard-card">
         <div className="card-section-header">

@@ -14,4 +14,4 @@ class User(Base):
     is_active = Column(Boolean, default=True)
 
     # Relationships
-    payments = relationship("Payment", back_populates="user")
+    # payments = relationship("Payment", back_populates="user")

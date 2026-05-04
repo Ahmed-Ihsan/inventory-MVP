@@ -19,6 +19,8 @@ def read_stock_levels(db: Session = Depends(get_db)):
             "id": item.id,
             "name": item.name,
             "sku": item.sku,
+            "price": item.price,
+            "category_name": item.category.name if item.category else None,
             "current_stock": item.current_stock,
             "min_stock_level": item.min_stock_level,
         }
@@ -53,9 +55,19 @@ def create_stock_movement(movement: StockMovementCreate, db: Session = Depends(g
     return db_movement
 
 
-@router.get("/movements", response_model=List[StockMovementResponse])
+@router.get("/movements", response_model=List[dict])
 def read_stock_movements(
     skip: int = 0, limit: int = 100, db: Session = Depends(get_db)
 ):
     movements = db.query(StockMovement).offset(skip).limit(limit).all()
-    return movements
+    return [
+        {
+            "id": m.id,
+            "item_id": m.item_id,
+            "item_name": m.item.name if m.item else None,
+            "quantity_change": m.quantity_change,
+            "reason": m.reason,
+            "timestamp": m.timestamp.isoformat() if m.timestamp else None,
+        }
+        for m in movements
+    ]

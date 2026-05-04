@@ -32,7 +32,6 @@ class Purchase(Base):
 
     # Relationships
     items = relationship("PurchaseItem", back_populates="purchase", cascade="all, delete-orphan")
-    installment_payments = relationship("InstallmentPayment", back_populates="purchase", cascade="all, delete-orphan")
 
     @property
     def is_fully_paid(self):
