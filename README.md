@@ -28,7 +28,65 @@ npm start
 
 Frontend will run on: `http://localhost:3000`
 
-## 📋 API Endpoints Available
+## 🐳 Docker Setup (Recommended for Easy Installation)
+
+### Prerequisites
+- Docker Desktop installed on your machine
+- Docker Compose (included with Docker Desktop)
+
+### Quick Start with Docker
+```bash
+# Clone the repository
+git clone <repository-url>
+cd inv
+
+# Build and start the application (single image with both frontend and backend)
+docker-compose up --build
+
+# The application will be available at:
+# Frontend: http://localhost
+# Backend API: http://localhost:8000
+# API Documentation: http://localhost:8000/docs
+```
+
+### Docker Commands
+```bash
+# Start application in background
+docker-compose up -d
+
+# View logs
+docker-compose logs -f
+
+# Stop application
+docker-compose down
+
+# Stop application and remove volumes (clears database)
+docker-compose down -v
+
+# Rebuild after code changes
+docker-compose up --build
+
+# View running container
+docker-compose ps
+```
+
+### Docker Architecture
+- **Single Container Image**: Contains both frontend (React) and backend (FastAPI)
+- **Frontend**: Served by nginx on port 80
+- **Backend**: FastAPI running on port 8000
+- **Process Manager**: Supervisor manages both services in the same container
+- **Database**: SQLite database persisted in `backend/data/` directory
+- **API Proxy**: nginx proxies API requests to the backend
+
+### Benefits of Docker Setup
+- ✅ No need to install Python, Node.js, or dependencies manually
+- ✅ Consistent environment across all machines
+- ✅ Easy to deploy on any PC with Docker
+- ✅ Simple one-command startup
+- ✅ Single image for both frontend and backend
+- ✅ Isolated from host system
+
+## �📋 API Endpoints Available
 
 ### Authentication
 - `POST /auth/register` - Register new user

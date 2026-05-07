@@ -1,0 +1,12 @@
+services:
+  inventory-app:
+    build: .
+    container_name: inventory-management
+    ports:
+      - "80:80"
+    volumes:
+      - ./backend/data:/app/backend/data
+    environment:
+      - DATABASE_URL=sqlite:////app/backend/data/inventory.db
+      - SECRET_KEY=your-secret-key-here-change-in-production
+    restart: unless-stopped

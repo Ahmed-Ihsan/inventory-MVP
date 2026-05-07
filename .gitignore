@@ -6,11 +6,30 @@ node_modules/
 # Production build
 /build
 /dist
+frontend/build/
 
 # Backend exclusions
 backend/venv/
+backend/env/
+backend/.venv/
 backend/*.db
+backend/__pycache__/
+backend/*.pyc
+backend/*$py.class
+backend/*.so
+backend/.Python
 backend/.pytest_cache/
+backend/.ruff_cache/
+backend/*.egg-info/
+backend/dist/
+backend/build/
+
+# Data directory (contains database)
+backend/data/
+
+# Backups
+backups/
+*.tar
 
 # Environment variables
 .env
@@ -25,6 +44,7 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
+*.log
 
 # Editor directories and files
 .vscode/
@@ -45,10 +65,6 @@ Thumbs.db
 # Testing
 /coverage
 
-# IDE
-.vscode/
-.idea/
-
 # Temporary files
 *.tmp
 *.temp
@@ -61,6 +77,13 @@ Thumbs.db
 .next/
 .nuxt/
 .vuepress/dist/
+
+# Docker
+docker-compose.override.yml
+
+# Documentation (optional)
+skill_fix.md
+docs/
 
 # Firebase
 .firebase/
