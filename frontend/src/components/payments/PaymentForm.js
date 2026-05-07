@@ -212,8 +212,8 @@ const PaymentForm = ({ onSave, onCancel, payment = null }) => {
         list="customers-list"
       />
       <datalist id="customers-list">
-        {customers.map((cust, idx) => (
-          <option key={idx} value={cust} />
+        {customers.map((cust) => (
+          <option key={`cust-${cust}`} value={cust} />
         ))}
       </datalist>
 

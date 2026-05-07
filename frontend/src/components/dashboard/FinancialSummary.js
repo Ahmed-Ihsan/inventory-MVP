@@ -36,7 +36,8 @@ const FinancialSummary = ({ formatCurrency }) => {
         const recentMoves = [...movements]
           .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
           .slice(0, 5)
-          .map(m => ({
+          .map((m, index) => ({
+            id: m.id || `movement-${m.item_id}-${m.timestamp}-${index}`,
             text: `${m.quantity_change > 0 ? 'إضافة' : 'سحب'} ${Math.abs(m.quantity_change)} وحدة — ${itemMap[m.item_id] || `#${m.item_id}`}`,
             time: relativeTime(m.timestamp),
             positive: m.quantity_change > 0,
@@ -96,8 +97,8 @@ const FinancialSummary = ({ formatCurrency }) => {
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              {activityLog.map((entry, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.625rem 0.875rem', background: 'var(--color-surface)', borderRadius: 'var(--border-radius-md)', border: '1px solid var(--color-border-light)' }}>
+              {activityLog.map((entry) => (
+                <div key={entry.id} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.625rem 0.875rem', background: 'var(--color-surface)', borderRadius: 'var(--border-radius-md)', border: '1px solid var(--color-border-light)' }}>
                   <span style={{
                     width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
                     background: entry.positive ? 'var(--color-success)' : 'var(--color-warning)',

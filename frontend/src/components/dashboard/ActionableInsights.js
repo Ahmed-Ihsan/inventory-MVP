@@ -102,8 +102,8 @@ const ActionableInsights = () => {
           <EmptyRow text="✓ لا توجد تنبيهات نشطة" success />
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
-            {alerts.map((alert, i) => (
-              <div key={i} style={rowStyle}>
+            {alerts.map((alert) => (
+              <div key={alert.id} style={rowStyle}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                   <div style={{
                     width: 38, height: 38, borderRadius: '10px',
@@ -144,8 +144,8 @@ const ActionableInsights = () => {
           <EmptyRow text="✓ جميع المنتجات ضمن المستوى الطبيعي" success />
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
-            {criticalItems.map((item, i) => (
-              <div key={i} style={rowStyle}>
+            {criticalItems.map((item) => (
+              <div key={item.id} style={rowStyle}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                   <div style={{
                     width: 38, height: 38, borderRadius: '10px',
@@ -187,7 +187,7 @@ const ActionableInsights = () => {
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             {topItems.map((item, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', background: 'var(--color-surface)', borderRadius: 'var(--border-radius-lg)', border: '1px solid var(--color-border-light)' }}>
+              <div key={`top-${item}`} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', background: 'var(--color-surface)', borderRadius: 'var(--border-radius-lg)', border: '1px solid var(--color-border-light)' }}>
                 <div style={{
                   width: 30, height: 30, borderRadius: '8px',
                   background: RANK_COLORS[i] ?? 'var(--color-border)',

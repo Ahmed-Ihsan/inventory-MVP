@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { FaReceipt, FaBolt, FaChevronRight, FaChevronLeft, FaCheck, FaTimes, FaArrowRight, FaPlus } from 'react-icons/fa';
+import { FaBolt, FaChevronRight, FaChevronLeft, FaCheck, FaArrowRight, FaPlus } from 'react-icons/fa';
 import apiService from '../services/apiService';
 import { useToast } from '../context/ToastContext';
 import FormField from '../components/common/FormField';
@@ -42,7 +42,7 @@ const QuickInvoice = () => {
 
   useEffect(() => {
     loadItems();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadItems = async () => {
     try {
@@ -282,8 +282,6 @@ const QuickInvoice = () => {
       );
     }
     if (step === 5) {
-      const skipKeys = new Set(['item_id', 'cost_price', 'notes']);
-      const entries = Object.entries(values).filter(([k, v]) => !skipKeys.has(k) && v !== '' && v !== null && v !== undefined);
       const selectedItem = items.find(i => String(i.id) === String(values.item_id));
       return (
         <div style={{ padding: '1rem' }}>
@@ -354,7 +352,7 @@ const QuickInvoice = () => {
           <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--color-border-light)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               {STEPS.map((label, i) => (
-                <React.Fragment key={i}>
+                <React.Fragment key={`step-${i}`}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <div style={{ width: 28, height: 28, borderRadius: '50%', background: step === i + 1 ? '#10b981' : step > i + 1 ? '#10b981' : 'var(--color-border-light)', color: step >= i + 1 ? '#fff' : 'var(--color-text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 600 }}>
                       {step > i + 1 ? <FaCheck size={10} /> : i + 1}

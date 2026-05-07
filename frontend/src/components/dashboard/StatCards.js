@@ -116,8 +116,8 @@ const StatCards = ({ stats, formatCurrency }) => {
 
   return (
     <div className="stats-grid">
-      {cards.map((card, i) => (
-        <StatCard key={i} {...card} />
+      {cards.map((card) => (
+        <StatCard key={card.title} {...card} />
       ))}
     </div>
   );

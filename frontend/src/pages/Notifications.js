@@ -134,9 +134,9 @@ const Notifications = () => {
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            {notifications.map((notification) => (
+            {notifications.map((notification, index) => (
               <div
-                key={notification.id}
+                key={notification.id || `notification-${notification.created_at}-${index}`}
                 style={{
                   padding: '1.25rem 1.5rem',
                   borderRadius: '16px',

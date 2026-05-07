@@ -1,13 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
-import Card from '../components/common/Card';
 import Table from '../components/common/Table';
 import apiService from '../services/apiService';
 import { useToast } from '../context/ToastContext';
 import { FaExchangeAlt, FaArrowUp, FaArrowDown } from 'react-icons/fa';
 
 const StockMovements = () => {
-  const { t, i18n } = useTranslation();
   const { addToast } = useToast();
   const [movements, setMovements] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -27,7 +24,7 @@ const StockMovements = () => {
 
   useEffect(() => {
     loadMovements();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const filteredMovements = filter === 'all' 
     ? movements 
@@ -129,7 +126,10 @@ const StockMovements = () => {
             <h3 style={{ color: 'var(--color-text)', margin: '0 0 0.5rem' }}>لا توجد حركات مخزون</h3>
           </div>
         ) : (
-          <Table columns={columns} data={filteredMovements} />
+          <Table columns={columns} data={filteredMovements.map((m, index) => ({
+            ...m,
+            _uniqueId: m.id || `movement-${m.timestamp}-${m.item_id}-${index}`
+          }))} />
         )}
       </div>
     </div>

@@ -51,8 +51,8 @@ const Login = () => {
         </p>
 
         <div className="auth-features-list">
-          {FEATURES.map(({ icon: Icon, text }, i) => (
-            <div className="auth-feature-item" key={i}>
+          {FEATURES.map(({ icon: Icon, text }) => (
+            <div className="auth-feature-item" key={text}>
               <div className="auth-feature-icon"><Icon /></div>
               <span className="auth-feature-text">{text}</span>
             </div>

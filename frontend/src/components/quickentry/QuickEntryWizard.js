@@ -656,7 +656,7 @@ const QuickEntryWizard = ({ isOpen, onClose, onOpen }) => {
               <div style={{ padding: '1.5rem 2rem', borderBottom: '1px solid var(--color-border-light)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   {TYPES[selectedType].steps.map((label, i) => (
-                    <React.Fragment key={i}>
+                    <React.Fragment key={`step-${i}`}>
                       <div style={{
                         display: 'flex',
                         flexDirection: 'column',

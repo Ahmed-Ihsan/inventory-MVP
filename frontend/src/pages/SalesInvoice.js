@@ -1,11 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import Card from '../components/common/Card';
-import Button from '../components/common/Button';
-import Modal from '../components/common/Modal';
 import apiService from '../services/apiService';
-import { FaPlus, FaPrint, FaReceipt, FaTrash, FaEdit, FaBolt } from 'react-icons/fa';
+import { FaPlus, FaReceipt, FaEdit, FaBolt } from 'react-icons/fa';
 import { useToast } from '../context/ToastContext';
 
 const SalesInvoice = () => {
@@ -45,7 +42,7 @@ const SalesInvoice = () => {
 
   useEffect(() => {
     loadInvoices();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleAddInvoice = () => {
     setEditingInvoice(null);
@@ -112,17 +109,6 @@ const SalesInvoice = () => {
       maximumFractionDigits: 0,
       numberingSystem: 'latn',
     }).format(amount);
-  };
-
-  const formatCurrencyInput = (value) => {
-    const locale = i18n.language === 'ar' ? 'ar-SA' : 'en-US';
-    return new Intl.NumberFormat(locale, {
-      style: 'currency',
-      currency: 'IQD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-      numberingSystem: 'latn',
-    }).format(value);
   };
 
   const addItem = () => {
@@ -259,8 +245,8 @@ const SalesInvoice = () => {
                 </tr>
               </thead>
               <tbody>
-                {invoices.map((invoice) => (
-                  <tr key={invoice.id} style={{ borderBottom: '1px solid var(--color-border-light)' }}
+                {invoices.map((invoice, index) => (
+                  <tr key={invoice.id || `invoice-${invoice.created_at}-${index}`} style={{ borderBottom: '1px solid var(--color-border-light)' }}
                     onMouseEnter={e => e.currentTarget.style.background = 'var(--color-surface)'}
                     onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                   >
@@ -276,7 +262,7 @@ const SalesInvoice = () => {
                       <div style={{ fontSize: '0.8rem', maxWidth: 200 }}>
                         {invoice.items && invoice.items.length > 0 ? (
                           invoice.items.map((item, idx) => (
-                            <div key={idx} style={{ marginBottom: '0.2rem', padding: '0.35rem 0.6rem', background: 'var(--color-surface)', borderRadius: '8px', border: '1px solid var(--color-border-light)' }}>
+                            <div key={item.id || `invoice-item-${invoice.id}-${idx}`} style={{ marginBottom: '0.2rem', padding: '0.35rem 0.6rem', background: 'var(--color-surface)', borderRadius: '8px', border: '1px solid var(--color-border-light)' }}>
                               <div style={{ fontWeight: 600, fontSize: '0.8rem', color: 'var(--color-text)' }}>{item.item_name}</div>
                               <div style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)' }}>
                                 {item.quantity}x {formatCurrency(item.selling_price)} · هامش: <span style={{ color: item.profit_margin >= 0 ? '#10b981' : '#ef4444', fontWeight: 600 }}>{item.profit_margin}%</span>
@@ -346,7 +332,7 @@ const SalesInvoice = () => {
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                   {formData.items.map((item, index) => (
-                    <div key={index} style={{ padding: '1rem', background: 'var(--color-surface)', borderRadius: '14px', border: '1px solid var(--color-border-light)', position: 'relative' }}>
+                    <div key={item.item_id || `form-item-${index}`} style={{ padding: '1rem', background: 'var(--color-surface)', borderRadius: '14px', border: '1px solid var(--color-border-light)', position: 'relative' }}>
                       {formData.items.length > 1 && (
                         <button onClick={() => removeItem(index)} style={{ position: 'absolute', top: '0.6rem', right: '0.6rem', width: 26, height: 26, borderRadius: '8px', background: '#ef444412', color: '#ef4444', border: '1px solid #ef444430', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.85rem' }}>✕</button>
                       )}

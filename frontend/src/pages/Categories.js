@@ -166,7 +166,7 @@ const Categories = () => {
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1px', background: 'var(--color-border-light)' }}>
             {categories.map((category, i) => (
-              <div key={category.id} style={{ background: 'var(--color-card-background)', padding: '1.25rem 1.5rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <div key={category.id || `category-${category.name}-${i}`} style={{ background: 'var(--color-card-background)', padding: '1.25rem 1.5rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
                 <div style={{ width: 44, height: 44, borderRadius: '12px', background: CAT_COLORS[i % CAT_COLORS.length] + '18', color: CAT_COLORS[i % CAT_COLORS.length], display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '1rem', flexShrink: 0 }}>
                   {category.name.charAt(0)}
                 </div>

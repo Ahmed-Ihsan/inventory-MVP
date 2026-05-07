@@ -220,7 +220,7 @@ const PaymentDetailsModal = memo(({ sale, onClose, onMakePayment, paymentAmount,
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
               {sale.items && sale.items.map((item, index) => (
                 <div
-                  key={index}
+                  key={item.id || `item-${index}`}
                   style={{
                     background: '#f8fafc',
                     borderRadius: '12px',
@@ -293,7 +293,7 @@ const PaymentDetailsModal = memo(({ sale, onClose, onMakePayment, paymentAmount,
               {sale.payments && sale.payments.length > 0 ? (
                 sale.payments.map((payment, index) => (
                   <div
-                    key={index}
+                    key={payment.id || `payment-${index}`}
                     style={{
                       background: 'linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)',
                       borderRadius: '12px',

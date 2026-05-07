@@ -9,7 +9,7 @@ const Table = memo(({ columns, data, className = '', emptyMessage = 'لا توج
           <thead>
             <tr>
               {columns.map((col, index) => (
-                <th key={index} style={{ textAlign: 'right', fontWeight: 'bold' }} scope="col">{col.header}</th>
+                <th key={`col-header-${col.accessor || index}`} style={{ textAlign: 'right', fontWeight: 'bold' }} scope="col">{col.header}</th>
               ))}
             </tr>
           </thead>
@@ -28,15 +28,15 @@ const Table = memo(({ columns, data, className = '', emptyMessage = 'لا توج
         <thead>
           <tr>
             {columns.map((col, index) => (
-              <th key={index} style={{ textAlign: 'right', fontWeight: 'bold' }} scope="col">{col.header}</th>
+              <th key={`col-header-${col.accessor || index}`} style={{ textAlign: 'right', fontWeight: 'bold' }} scope="col">{col.header}</th>
             ))}
           </tr>
         </thead>
         <tbody>
           {data.map((row, rowIndex) => (
-            <tr key={rowIndex}>
+            <tr key={`row-${row.id || rowIndex}`}>
               {columns.map((col, colIndex) => (
-                <td key={colIndex} style={{ textAlign: col.accessor === 'actions' ? 'center' : 'right' }}>
+                <td key={`cell-${rowIndex}-${col.accessor || colIndex}`} style={{ textAlign: col.accessor === 'actions' ? 'center' : 'right' }}>
                   {col.render ? col.render(row) : row[col.accessor]}
                 </td>
               ))}

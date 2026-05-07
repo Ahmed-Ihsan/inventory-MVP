@@ -383,10 +383,10 @@ const Purchases = () => {
                 </tr>
               </thead>
               <tbody>
-                {purchases.map((row) => {
+                {purchases.map((row, index) => {
                   const sm = STATUS_META[row.status] || STATUS_META.pending;
                   return (
-                    <tr key={row.id} style={{ borderBottom: '1px solid var(--color-border-light)' }}
+                    <tr key={row.id || `purchase-${row.created_at}-${index}`} style={{ borderBottom: '1px solid var(--color-border-light)' }}
                       onMouseEnter={e => e.currentTarget.style.background = 'var(--color-surface)'}
                       onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                     >

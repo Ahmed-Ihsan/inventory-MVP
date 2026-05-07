@@ -124,7 +124,7 @@ const GlobalSearch = ({ isOpen, onClose }) => {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               {results.map((result, index) => (
                 <button
-                  key={index}
+                  key={`${result.type}-${result.path}-${index}`}
                   onClick={() => handleResultClick(result)}
                   style={{ width: '100%', padding: '1rem', borderRadius: '12px', border: '1px solid var(--color-border-light)', background: 'var(--color-surface)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '1rem', textAlign: 'start', transition: 'all 0.2s' }}
                   onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--color-border-light)'; }}
