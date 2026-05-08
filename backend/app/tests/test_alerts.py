@@ -4,7 +4,7 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 
 from ..database import Base
-from ..models import user, item, category, stock_movement, alert, payment
+from ..models import user, item, category, stock_movement, alert
 from ..schemas import alert as alert_schema
 from ..services.alert_service import AlertService
 

@@ -9,17 +9,17 @@ export const ToastProvider = ({ children }) => {
 
   const addToast = (message, type = 'info', duration = 5000) => {
     const id = `toast-${Date.now()}-${++toastCounter.current}`;
-    setToasts(prev => [...prev, { id, message, type, duration }]);
+    setToasts((prev) => [...prev, { id, message, type, duration }]);
   };
 
   const removeToast = (id) => {
-    setToasts(prev => prev.filter(toast => toast.id !== id));
+    setToasts((prev) => prev.filter((toast) => toast.id !== id));
   };
 
   return (
     <ToastContext.Provider value={{ addToast }}>
       {children}
-      {toasts.map(toast => (
+      {toasts.map((toast) => (
         <Toast
           key={toast.id}
           message={toast.message}

@@ -8,9 +8,15 @@ const ScanResult = ({ result }) => {
   return (
     <div className="scan-result">
       <h3>{t('scanning.scanResult')}</h3>
-      <p>{t('scanning.sku')}: {result.sku}</p>
-      <p>{t('scanning.item')}: {result.item}</p>
-      <p>{t('scanning.currentStock')}: {result.current_stock}</p>
+      <p>
+        {t('scanning.sku')}: {result.sku}
+      </p>
+      <p>
+        {t('scanning.item')}: {result.item}
+      </p>
+      <p>
+        {t('scanning.currentStock')}: {result.current_stock}
+      </p>
     </div>
   );
 };

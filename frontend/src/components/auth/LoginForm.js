@@ -14,8 +14,8 @@ const LoginForm = ({ onLogin }) => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-    if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    if (errors[name]) setErrors((prev) => ({ ...prev, [name]: '' }));
   };
 
   const handleSubmit = async (e) => {
@@ -23,7 +23,10 @@ const LoginForm = ({ onLogin }) => {
     const newErrors = {};
     if (!formData.username.trim()) newErrors.username = 'اسم المستخدم مطلوب';
     if (!formData.password) newErrors.password = 'كلمة المرور مطلوبة';
-    if (Object.keys(newErrors).length) { setErrors(newErrors); return; }
+    if (Object.keys(newErrors).length) {
+      setErrors(newErrors);
+      return;
+    }
 
     setIsSubmitting(true);
     try {
@@ -63,7 +66,13 @@ const LoginForm = ({ onLogin }) => {
         placeholder="أدخل كلمة المرور"
       />
 
-      <Button type="submit" className="btn-accent" fullWidth loading={isSubmitting} style={{ marginTop: '1rem' }}>
+      <Button
+        type="submit"
+        className="btn-accent"
+        fullWidth
+        loading={isSubmitting}
+        style={{ marginTop: '1rem' }}
+      >
         {t('auth.loginButton')}
       </Button>
     </form>

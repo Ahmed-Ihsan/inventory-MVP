@@ -4,7 +4,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import IntegrityError
 
 from ..database import Base
-from ..models import Item, Category, StockMovement, payment
+from ..models import Item, Category, StockMovement
 
 SQLALCHEMY_DATABASE_URL = "sqlite:///./test.db"
 

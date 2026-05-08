@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════
-   CSS RESET & BASE
+   CSS RESET & BASE — Precision Dark Enterprise
    ═══════════════════════════════════════════════════════════════ */
 
 *,
@@ -12,42 +12,57 @@
 
 html {
   scroll-behavior: smooth;
-  font-size: 16px;
+  font-size: 15px;
   -webkit-text-size-adjust: 100%;
 }
 
 body {
   font-family: var(--font-primary);
-  background-color: var(--color-background);
+  background: var(--color-background);
   color: var(--color-text);
   line-height: 1.6;
+  text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  text-rendering: optimizeLegibility;
-  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
 }
 
-/* ─── Selection styling ─── */
+/* ── Selection ── */
 ::selection {
-  background-color: var(--color-accent-100);
-  color: var(--color-primary-dark);
+  background-color: var(--color-primary-200);
+  color: #fff;
 }
 
-/* ─── Scrollbar styling ─── */
-::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
-}
-
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
+/* ── Scrollbar ── */
+::-webkit-scrollbar       { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
-  background: var(--color-primary-200);
+  background: var(--color-border);
   border-radius: var(--border-radius-full);
 }
-
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--color-primary-light);
+  background: var(--color-text-muted);
 }
+
+/* ── Focus ring ── */
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ── Images ── */
+img, svg { display: block; max-width: 100%; }
+
+/* ── Typography reset ── */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  color: var(--color-text);
+}
+
+a { color: inherit; }
+button { font-family: var(--font-primary); }
+input, textarea, select { font-family: var(--font-primary); }

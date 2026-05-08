@@ -1,11 +1,15 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import Card from '../components/common/Card';
 import FormField from '../components/common/FormField';
-import Button from '../components/common/Button';
 import ConfirmDialog from '../components/common/ConfirmDialog';
 import { useCategories } from '../hooks/useCategories';
-import { FaTags, FaPlus } from 'react-icons/fa';
+import { Button } from '../components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import { Badge } from '../components/ui/badge';
+import { FaTags, FaPlus, FaEdit, FaTrash, FaLayerGroup, FaPrint } from 'react-icons/fa';
+import Loading from '../components/common/Loading';
+import { cn } from '../lib/utils';
+import apiService from '../services/apiService';
 
 const Categories = () => {
   const { t } = useTranslation();
@@ -17,6 +21,7 @@ const Categories = () => {
   const [confirmId, setConfirmId] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [nameError, setNameError] = useState('');
+  const [itemCounts, setItemCounts] = useState({});
 
   const resetForm = () => {
     setFormData({ name: '', description: '' });
@@ -39,7 +44,10 @@ const Categories = () => {
 
   const handleSave = async (e) => {
     e.preventDefault();
-    if (!formData.name.trim()) { setNameError('اسم الفئة مطلوب'); return; }
+    if (!formData.name.trim()) {
+      setNameError(t('categories.categoryRequired'));
+      return;
+    }
     setIsSaving(true);
     try {
       if (editingId) {
@@ -57,6 +65,10 @@ const Categories = () => {
 
   const handleCancel = () => resetForm();
 
+  const handlePrintCategories = () => {
+    window.print();
+  };
+
   const handleDeleteConfirm = async () => {
     setIsDeleting(true);
     try {
@@ -67,71 +79,148 @@ const Categories = () => {
     }
   };
 
-  const CAT_COLORS = ['#e74c3c','#9b59b6','#3498db','#2ecc71','#f39c12','#1abc9c','#e67e22','#e91e63'];
+  const CAT_ICON_CLASSES = [
+    'bg-red-100 text-red-600 dark:bg-red-500/20 dark:text-red-400',
+    'bg-purple-100 text-purple-600 dark:bg-purple-500/20 dark:text-purple-400',
+    'bg-blue-100 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400',
+    'bg-green-100 text-green-600 dark:bg-green-500/20 dark:text-green-400',
+    'bg-amber-100 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400',
+    'bg-teal-100 text-teal-600 dark:bg-teal-500/20 dark:text-teal-400',
+    'bg-orange-100 text-orange-600 dark:bg-orange-500/20 dark:text-orange-400',
+    'bg-pink-100 text-pink-600 dark:bg-pink-500/20 dark:text-pink-400',
+  ];
 
   return (
-    <div className="page">
-      {/* Hero Header */}
-      <div style={{
-        background: 'linear-gradient(135deg, #e74c3c 0%, #c0392b 100%)',
-        borderRadius: '20px',
-        padding: 'clamp(1.5rem, 4vw, 2.5rem)',
-        marginBottom: '1.75rem',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        flexWrap: 'wrap',
-        gap: '1rem',
-        boxShadow: '0 8px 32px rgba(231,76,60,0.25)',
-        position: 'relative',
-        overflow: 'hidden',
-      }}>
-        <div style={{ position: 'absolute', bottom: -50, left: -50, width: 180, height: 180, borderRadius: '50%', background: 'rgba(255,255,255,0.06)', pointerEvents: 'none' }} />
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
-          <div style={{ width: 56, height: 56, borderRadius: '16px', background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', color: '#fff', backdropFilter: 'blur(8px)', flexShrink: 0 }}>
-            <FaTags />
+    <div className="space-y-4 sm:space-y-6">
+      {/* Page header with gradient */}
+      <div className="relative overflow-hidden rounded-2xl p-4 sm:p-6 md:p-8 mb-4 sm:mb-6 shadow-lg" style={{ background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)' }}>
+        {/* Decorative circles */}
+        <div className="absolute top-0 right-0 w-48 h-48 rounded-full bg-white/10 -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-32 h-32 rounded-full bg-white/8 translate-y-1/2 -translate-x-1/2 pointer-events-none" />
+
+        <div className="relative flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-6">
+          <div className="flex items-center gap-3 sm:gap-5 w-full sm:w-auto">
+            <div className="flex h-12 w-12 sm:h-14 sm:w-14 md:h-16 md:w-16 shrink-0 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-sm text-white shadow-lg text-2xl">
+              <FaTags />
+            </div>
+            <div className="space-y-1">
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white drop-shadow-sm">
+                {t('categories.management')}
+              </h1>
+              <p className="text-sm sm:text-base text-white/90 font-medium">
+                {categories.length} {t('categories.registeredCategories', { defaultValue: 'categories' })}
+              </p>
+            </div>
           </div>
-          <div>
-            <h1 style={{ margin: 0, color: '#fff', fontSize: 'clamp(1.25rem,3vw,1.75rem)', fontWeight: 800, letterSpacing: '-0.02em' }}>{t('categories.management')}</h1>
-            <p style={{ margin: 0, color: 'rgba(255,255,255,0.8)', fontSize: '0.9rem', marginTop: '0.25rem' }}>
-              {categories.length} {t('categories.noCategories') === 'لا توجد فئات' ? 'فئة مسجلة' : 'categories'} · أضف ودر فئات الأصناف
-            </p>
-          </div>
+          {!isEditing && (
+            <div className="flex gap-2 sm:gap-3 w-full sm:w-auto">
+              <Button
+                size="sm"
+                onClick={handlePrintCategories}
+                variant="outline"
+                className="bg-white/10 hover:bg-white/20 text-white border-white/30 font-semibold shadow-lg backdrop-blur-sm"
+              >
+                <FaPrint size={12} className="sm:size-13 mr-2" />
+                <span className="hidden sm:inline">{t('common.print')}</span>
+              </Button>
+              <Button
+                size="sm"
+                onClick={handleAdd}
+                className="bg-white text-purple-600 hover:bg-white/90 font-semibold shadow-lg"
+              >
+                <FaPlus size={12} className="sm:size-13 mr-2" />
+                {t('categories.addNew')}
+              </Button>
+            </div>
+          )}
         </div>
-        {!isEditing && (
-          <button onClick={handleAdd} style={{ background: '#fff', border: 'none', color: '#e74c3c', padding: '0.6rem 1.4rem', borderRadius: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 700, fontSize: '0.875rem', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-            <FaPlus size={13} /> {t('categories.addNew')}
-          </button>
-        )}
       </div>
+
+      {/* Summary Cards */}
+      {!loading && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5 mb-4 sm:mb-6">
+          <Card className="group relative overflow-hidden border-border/60 shadow-lg shadow-black/5 hover:shadow-xl hover:shadow-purple-500/10 transition-all duration-300">
+            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <CardContent className="relative p-3 sm:p-4 md:p-6">
+              <div className="flex items-center justify-between mb-2 sm:mb-4">
+                <span className="text-[10px] sm:text-xs md:text-sm font-semibold text-muted-foreground tracking-wide uppercase">
+                  إجمالي الفئات
+                </span>
+                <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-xl bg-purple-500/10 text-purple-600 ring-1 ring-purple-500/20">
+                  <FaLayerGroup size={14} className="sm:size-18" />
+                </div>
+              </div>
+              <p className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-foreground drop-shadow-sm">
+                {categories.length}
+              </p>
+              <p className="text-[10px] sm:text-xs md:text-sm text-muted-foreground mt-1">فئات مسجلة</p>
+            </CardContent>
+          </Card>
+
+          <Card className="group relative overflow-hidden border-border/60 shadow-lg shadow-black/5 hover:shadow-xl hover:shadow-emerald-500/10 transition-all duration-300">
+            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <CardContent className="relative p-3 sm:p-4 md:p-6">
+              <div className="flex items-center justify-between mb-2 sm:mb-4">
+                <span className="text-[10px] sm:text-xs md:text-sm font-semibold text-muted-foreground tracking-wide uppercase">
+                  مع وصف
+                </span>
+                <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 ring-1 ring-emerald-500/20">
+                  <FaTags size={14} className="sm:size-18" />
+                </div>
+              </div>
+              <p className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-emerald-600 dark:text-emerald-400 drop-shadow-sm">
+                {categories.filter((c) => c.description).length}
+              </p>
+              <p className="text-[10px] sm:text-xs md:text-sm text-muted-foreground mt-1">موصوفة بالتفصيل</p>
+            </CardContent>
+          </Card>
+
+          <Card className="group relative overflow-hidden border-border/60 shadow-lg shadow-black/5 hover:shadow-xl hover:shadow-amber-500/10 transition-all duration-300">
+            <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <CardContent className="relative p-3 sm:p-4 md:p-6">
+              <div className="flex items-center justify-between mb-2 sm:mb-4">
+                <span className="text-[10px] sm:text-xs md:text-sm font-semibold text-muted-foreground tracking-wide uppercase">
+                  بدون وصف
+                </span>
+                <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 ring-1 ring-amber-500/20">
+                  <FaTags size={14} className="sm:size-18" />
+                </div>
+              </div>
+              <p className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-amber-600 dark:text-amber-400 drop-shadow-sm">
+                {categories.filter((c) => !c.description).length}
+              </p>
+              <p className="text-[10px] sm:text-xs md:text-sm text-muted-foreground mt-1">تحتاج إكمال</p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Add/Edit Form */}
       {isEditing && (
-        <div style={{ background: 'var(--color-card-background)', borderRadius: '20px', border: '2px solid #e74c3c40', boxShadow: '0 4px 24px rgba(231,76,60,0.1)', padding: '1.75rem', marginBottom: '1.5rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
-            <div style={{ width: 36, height: 36, borderRadius: '10px', background: '#e74c3c18', color: '#e74c3c', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              {editingId ? <FaTags size={14} /> : <FaPlus size={14} />}
-            </div>
-            <h3 style={{ margin: 0, fontWeight: 700, color: 'var(--color-text)', fontSize: '1rem' }}>
-              {editingId ? 'تعديل الفئة' : 'إضافة فئة جديدة'}
-            </h3>
-          </div>
-          <form onSubmit={handleSave} noValidate>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
-              <div>
+        <Card className="border-border/60 shadow-lg shadow-black/5">
+          <CardHeader className="pb-3 sm:pb-4">
+            <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
+              {editingId ? <FaTags size={12} className="sm:size-14" aria-hidden="true" /> : <FaPlus size={12} className="sm:size-14" aria-hidden="true" />}
+              {editingId ? t('categories.editCategory') : t('categories.addCategory')}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSave} noValidate>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-3 sm:mb-4">
                 <FormField
                   label={t('categories.name')}
                   name="name"
                   type="text"
                   value={formData.name}
-                  onChange={(e) => { setFormData({ ...formData, name: e.target.value }); setNameError(''); }}
+                  onChange={(e) => {
+                    setFormData({ ...formData, name: e.target.value });
+                    setNameError('');
+                  }}
                   error={nameError}
                   required
                   clearable
                   placeholder="أدخل اسم الفئة"
                 />
-              </div>
-              <div>
                 <FormField
                   label={t('categories.description')}
                   name="description"
@@ -141,54 +230,83 @@ const Categories = () => {
                   placeholder="وصف اختياري للفئة"
                 />
               </div>
-            </div>
-            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
-              <Button type="button" onClick={handleCancel} className="btn-secondary" disabled={isSaving}>{t('common.cancel')}</Button>
-              <Button type="submit" className="btn-primary" loading={isSaving}>{t('common.save')}</Button>
-            </div>
-          </form>
-        </div>
+              <div className="flex justify-end gap-2">
+                <Button type="button" variant="outline" onClick={handleCancel} disabled={isSaving} className="text-xs sm:text-sm">
+                  {t('common.cancel')}
+                </Button>
+                <Button type="submit" loading={isSaving} className="text-xs sm:text-sm">
+                  {t('common.save')}
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
       )}
 
-      {/* Categories Grid/Table */}
-      <div style={{ background: 'var(--color-card-background)', borderRadius: '20px', border: '1px solid var(--color-border-light)', boxShadow: 'var(--shadow-card)', overflow: 'hidden' }}>
-        {loading ? (
-          <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--color-text-muted)' }}>{t('common.loading')}</div>
-        ) : categories.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '4rem' }}>
-            <div style={{ width: 72, height: 72, borderRadius: '18px', background: '#e74c3c12', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem', color: '#e74c3c', margin: '0 auto 1.25rem' }}><FaTags /></div>
-            <h3 style={{ color: 'var(--color-text)', margin: '0 0 0.5rem' }}>لا توجد فئات بعد</h3>
-            <p style={{ color: 'var(--color-text-muted)', margin: '0 0 1.5rem', fontSize: '0.9rem' }}>أضف أول فئة لتنظيم مخزونك</p>
-            <button onClick={handleAdd} style={{ background: '#e74c3c', color: '#fff', border: 'none', padding: '0.6rem 1.5rem', borderRadius: '10px', cursor: 'pointer', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
-              <FaPlus size={12} /> {t('categories.addNew')}
-            </button>
-          </div>
-        ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1px', background: 'var(--color-border-light)' }}>
-            {categories.map((category, i) => (
-              <div key={category.id || `category-${category.name}-${i}`} style={{ background: 'var(--color-card-background)', padding: '1.25rem 1.5rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                <div style={{ width: 44, height: 44, borderRadius: '12px', background: CAT_COLORS[i % CAT_COLORS.length] + '18', color: CAT_COLORS[i % CAT_COLORS.length], display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '1rem', flexShrink: 0 }}>
-                  {category.name.charAt(0)}
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontWeight: 600, color: 'var(--color-text)', fontSize: '0.95rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{category.name}</div>
-                  <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', marginTop: '0.2rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{category.description || '—'}</div>
-                </div>
-                <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0 }}>
-                  <button onClick={() => handleEdit(category)} style={{ width: 32, height: 32, borderRadius: '8px', background: 'var(--color-surface)', border: '1px solid var(--color-border-light)', color: 'var(--color-text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem' }}>✏️</button>
-                  <button onClick={() => setConfirmId(category.id)} style={{ width: 32, height: 32, borderRadius: '8px', background: '#e74c3c12', border: '1px solid #e74c3c30', color: '#e74c3c', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem' }}>🗑</button>
-                </div>
+      {/* Categories list */}
+      <Card className="border-border/60 shadow-lg shadow-black/5">
+        <CardContent className="pt-4 sm:pt-6">
+          {loading ? (
+            <Loading />
+          ) : categories.length === 0 ? (
+            <div className="flex flex-col items-center gap-3 sm:gap-4 py-12 sm:py-16 text-center">
+              <div className="flex h-12 w-12 sm:h-16 sm:w-16 items-center justify-center rounded-xl bg-muted text-muted-foreground text-xl sm:text-2xl">
+                <FaTags aria-hidden="true" />
               </div>
-            ))}
-          </div>
-        )}
-      </div>
+              <h3 className="text-sm sm:text-base font-semibold text-foreground text-balance">{t('categories.noCategoriesYet')}</h3>
+              <p className="text-xs sm:text-sm text-muted-foreground text-pretty">{t('categories.addFirstCategory')}</p>
+              <Button size="sm" onClick={handleAdd} className="text-xs sm:text-sm">
+                <FaPlus size={11} className="sm:size-12 mr-1" aria-hidden="true" /> {t('categories.addNew')}
+              </Button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+              {categories.map((category, i) => (
+                <div
+                  key={category.id || `category-${category.name}-${i}`}
+                  className="group flex items-center gap-2 sm:gap-3 rounded-xl border border-border/60 p-3 sm:p-4 hover:border-purple-500/30 hover:shadow-lg hover:shadow-purple-500/5 transition-all duration-300"
+                >
+                  <div className={cn('flex h-10 w-10 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-xl text-sm sm:text-lg font-bold ring-1 ring-border/50', CAT_ICON_CLASSES[i % CAT_ICON_CLASSES.length])}>
+                    {category.name.charAt(0).toUpperCase()}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs sm:text-sm font-semibold text-foreground truncate">{category.name}</p>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground truncate mt-0.5">
+                      {category.description || '—'}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 sm:h-8 sm:w-8 hover:bg-purple-500/10 hover:text-purple-600"
+                      onClick={() => handleEdit(category)}
+                      aria-label={`${t('common.edit')} ${category.name}`}
+                    >
+                      <FaEdit size={12} className="sm:size-13" aria-hidden="true" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 sm:h-8 sm:w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                      onClick={() => setConfirmId(category.id)}
+                      aria-label={`${t('common.delete')} ${category.name}`}
+                    >
+                      <FaTrash size={12} className="sm:size-13" aria-hidden="true" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       <ConfirmDialog
         isOpen={!!confirmId}
-        title="حذف الفئة"
-        message="هل أنت متأكد من حذف هذه الفئة؟ لا يمكن التراجع عن هذا الإجراء."
-        confirmLabel="حذف"
+        title={t('categories.deleteCategory')}
+        message={t('categories.deleteCategoryMessage')}
+        confirmLabel={t('common.delete')}
         cancelLabel={t('common.cancel')}
         variant="danger"
         loading={isDeleting}

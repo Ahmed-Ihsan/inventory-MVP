@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import Card from '../components/common/Card';
 import Table from '../components/common/Table';
@@ -6,15 +6,29 @@ import Button from '../components/common/Button';
 import FormField from '../components/common/FormField';
 import ConfirmDialog from '../components/common/ConfirmDialog';
 import { StatusBadge } from '../components/common/StatusBadge';
+import { Card as ShadcnCard, CardContent } from '../components/ui/card';
+import { cn } from '../lib/utils';
 import apiService from '../services/apiService';
 import { useToast } from '../context/ToastContext';
-import { FaShoppingCart, FaPlus, FaBoxOpen, FaCheckCircle, FaExclamationCircle } from 'react-icons/fa';
+import {
+  FaShoppingCart,
+  FaPlus,
+  FaBoxOpen,
+  FaCheckCircle,
+  FaExclamationCircle,
+  FaPrint,
+} from 'react-icons/fa';
 
 const Purchases = () => {
   const { t, i18n } = useTranslation();
   const { addToast } = useToast();
   const [purchases, setPurchases] = useState([]);
-  const [summary, setSummary] = useState({ total_purchases: 0, total_amount: 0, total_paid: 0, total_remaining: 0 });
+  const [summary, setSummary] = useState({
+    total_purchases: 0,
+    total_amount: 0,
+    total_paid: 0,
+    total_remaining: 0,
+  });
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [editingPurchase, setEditingPurchase] = useState(null);
@@ -31,16 +45,16 @@ const Purchases = () => {
     payment_method: 'cash',
     description: '',
     purchase_date: new Date().toISOString().slice(0, 16),
-    items: []
+    items: [],
   });
 
-  const loadPurchases = async () => {
+  const loadPurchases = useCallback(async () => {
     try {
       setLoading(true);
       const filters = filter !== 'all' ? { status: filter } : {};
       const [purchasesData, summaryData] = await Promise.all([
         apiService.getPurchases(filters),
-        apiService.getPurchaseSummary()
+        apiService.getPurchaseSummary(),
       ]);
       setPurchases(purchasesData);
       setSummary(summaryData);
@@ -49,11 +63,11 @@ const Purchases = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filter]);
 
   useEffect(() => {
     loadPurchases();
-  }, [filter]);
+  }, [loadPurchases]);
 
   const loadPurchasePayments = async (purchaseId) => {
     try {
@@ -84,7 +98,7 @@ const Purchases = () => {
       payment_method: 'cash',
       description: '',
       purchase_date: new Date().toISOString().slice(0, 16),
-      items: []
+      items: [],
     });
     setEditingPurchase(null);
     setIsEditing(false);
@@ -103,8 +117,10 @@ const Purchases = () => {
       paid_amount: purchase.paid_amount,
       payment_method: purchase.payment_method,
       description: purchase.description || '',
-      purchase_date: purchase.purchase_date ? new Date(purchase.purchase_date).toISOString().slice(0, 16) : new Date().toISOString().slice(0, 16),
-      items: purchase.items || []
+      purchase_date: purchase.purchase_date
+        ? new Date(purchase.purchase_date).toISOString().slice(0, 16)
+        : new Date().toISOString().slice(0, 16),
+      items: purchase.items || [],
     });
     setIsEditing(true);
   };
@@ -128,9 +144,10 @@ const Purchases = () => {
         ...formData,
         total_amount: parseFloat(formData.total_amount),
         paid_amount: parseFloat(formData.paid_amount) || 0,
-        remaining_amount: parseFloat(formData.total_amount) - (parseFloat(formData.paid_amount) || 0),
+        remaining_amount:
+          parseFloat(formData.total_amount) - (parseFloat(formData.paid_amount) || 0),
         purchase_date: new Date(formData.purchase_date).toISOString(),
-        status: editingPurchase ? editingPurchase.status : 'pending'
+        status: editingPurchase ? editingPurchase.status : 'pending',
       };
 
       if (editingPurchase) {
@@ -169,63 +186,124 @@ const Purchases = () => {
     const statusMap = {
       pending: 'warning',
       completed: 'success',
-      cancelled: 'danger'
+      cancelled: 'danger',
     };
     return <StatusBadge status={statusMap[status] || 'info'} />;
   };
 
   const getPaymentMethodBadge = (method) => {
     return method === 'cash' ? (
-      <span style={{ color: 'var(--color-success)', fontWeight: '600' }}>{t('purchases.cash')}</span>
+      <span style={{ color: 'var(--color-success)', fontWeight: '600' }}>
+        {t('purchases.cash')}
+      </span>
     ) : (
-      <span style={{ color: 'var(--color-warning)', fontWeight: '600' }}>{t('purchases.installment')}</span>
+      <span style={{ color: 'var(--color-warning)', fontWeight: '600' }}>
+        {t('purchases.installment')}
+      </span>
     );
+  };
+
+  const handlePrintPurchase = (purchase) => {
+    const printContent = `
+      <html dir="${i18n.language === 'ar' ? 'rtl' : 'ltr'}">
+      <head>
+        <title>طلب شراء #${purchase.id}</title>
+        <style>
+          body { font-family: Arial, sans-serif; padding: 20px; }
+          .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #f59e0b; padding-bottom: 10px; }
+          .title { font-size: 24px; font-weight: bold; color: #f59e0b; }
+          .date { margin: 10px 0; }
+          .section { background: #f5f5f5; padding: 15px; margin: 15px 0; border-radius: 8px; }
+          .section-title { font-weight: bold; margin-bottom: 10px; color: #f59e0b; }
+          .info-row { display: flex; justify-content: space-between; margin: 5px 0; }
+          .totals { text-align: right; margin-top: 20px; }
+          .total-row { font-size: 18px; font-weight: bold; margin: 5px 0; }
+          .status { padding: 5px 15px; border-radius: 20px; display: inline-block; margin-top: 10px; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div class="title">طلب شراء #${purchase.id}</div>
+          <div class="date">التاريخ: ${new Date(purchase.purchase_date).toLocaleDateString(i18n.language === 'ar' ? 'ar-SA' : 'en-US')}</div>
+        </div>
+        <div class="section">
+          <div class="section-title">معلومات المورد</div>
+          <div class="info-row"><span>المورد:</span><span>${purchase.supplier_name}</span></div>
+        </div>
+        <div class="section">
+          <div class="section-title">تفاصيل الشراء</div>
+          <div class="info-row"><span>الإجمالي:</span><span>${formatCurrency(purchase.total_amount)}</span></div>
+          <div class="info-row"><span>المدفوع:</span><span>${formatCurrency(purchase.paid_amount)}</span></div>
+          <div class="info-row"><span>المتبقي:</span><span>${formatCurrency(purchase.remaining_amount)}</span></div>
+          <div class="info-row"><span>طريقة الدفع:</span><span>${purchase.payment_method === 'cash' ? 'نقداً' : 'آجل'}</span></div>
+        </div>
+        ${purchase.description ? `<div class="section"><div class="section-title">ملاحظات</div><div>${purchase.description}</div></div>` : ''}
+      </body>
+      </html>
+    `;
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(printContent);
+    printWindow.document.close();
+    printWindow.print();
   };
 
   const columns = [
     {
       header: t('purchases.supplier'),
-      accessor: 'supplier_name'
+      accessor: 'supplier_name',
     },
     {
       header: t('purchases.date'),
       accessor: 'purchase_date',
-      render: (row) => new Date(row.purchase_date).toLocaleDateString(i18n.language === 'ar' ? 'ar-SA' : 'en-US')
+      render: (row) =>
+        new Date(row.purchase_date).toLocaleDateString(i18n.language === 'ar' ? 'ar-SA' : 'en-US'),
     },
     {
       header: t('purchases.total'),
       accessor: 'total_amount',
-      render: (row) => formatCurrency(row.total_amount)
+      render: (row) => formatCurrency(row.total_amount),
     },
     {
       header: t('purchases.paid'),
       accessor: 'paid_amount',
-      render: (row) => formatCurrency(row.paid_amount)
+      render: (row) => formatCurrency(row.paid_amount),
     },
     {
       header: t('purchases.remaining'),
       accessor: 'remaining_amount',
       render: (row) => (
-        <span style={{ color: row.remaining_amount > 0 ? 'var(--color-danger)' : 'var(--color-success)', fontWeight: '600' }}>
+        <span
+          style={{
+            color: row.remaining_amount > 0 ? 'var(--color-danger)' : 'var(--color-success)',
+            fontWeight: '600',
+          }}
+        >
           {formatCurrency(row.remaining_amount)}
         </span>
-      )
+      ),
     },
     {
       header: t('purchases.paymentMethod'),
       accessor: 'payment_method',
-      render: (row) => getPaymentMethodBadge(row.payment_method)
+      render: (row) => getPaymentMethodBadge(row.payment_method),
     },
     {
       header: t('purchases.status'),
       accessor: 'status',
-      render: (row) => getStatusBadge(row.status)
+      render: (row) => getStatusBadge(row.status),
     },
     {
       header: t('common.actions'),
       accessor: 'actions',
       render: (row) => (
         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+          <Button
+            onClick={() => handlePrintPurchase(row)}
+            className="btn-secondary"
+            style={{ padding: '0.25rem 0.5rem', fontSize: '0.875rem' }}
+          >
+            <FaPrint size={12} style={{ marginRight: '0.25rem' }} /> {t('common.print')}
+          </Button>
           {row.remaining_amount > 0 && row.status === 'pending' && (
             <Button
               onClick={() => {
@@ -258,177 +336,266 @@ const Purchases = () => {
   ];
 
   const STATUS_META = {
-    pending:   { color: '#f39c12', bg: '#f39c1215', label: t('purchases.pending') },
+    pending: { color: '#f39c12', bg: '#f39c1215', label: t('purchases.pending') },
     completed: { color: '#2ecc71', bg: '#2ecc7115', label: t('purchases.completed') },
     cancelled: { color: '#e74c3c', bg: '#e74c3c15', label: t('purchases.cancelled') },
   };
 
+  const paymentMethodOptions = [
+    { value: 'cash', label: t('purchases.cash') },
+    { value: 'installment', label: t('purchases.installment') },
+  ];
+
+  const FILTER_OPTIONS = [
+    { value: 'all', label: t('common.all') },
+    { value: 'pending', label: t('purchases.pending') },
+    { value: 'completed', label: t('purchases.completed') },
+    { value: 'cancelled', label: t('purchases.cancelled') },
+  ];
+
+  const handleCancel = () => {
+    resetForm();
+    setIsEditing(false);
+  };
+
+  const handleViewPurchase = (purchase) => {
+    handleEdit(purchase);
+  };
+
   return (
-    <div className="page">
+    <div className="space-y-4 sm:space-y-6">
+      {/* Page header with gradient */}
+      <div className="relative overflow-hidden rounded-2xl p-4 sm:p-6 md:p-8 mb-4 sm:mb-6 shadow-lg" style={{ background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' }}>
+        {/* Decorative circles */}
+        <div className="absolute top-0 right-0 w-48 h-48 rounded-full bg-white/10 -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-32 h-32 rounded-full bg-white/8 translate-y-1/2 -translate-x-1/2 pointer-events-none" />
 
-      {/* ── Hero Header ── */}
-      <div style={{
-        background: 'linear-gradient(135deg, #f39c12 0%, #e67e22 100%)',
-        borderRadius: '20px', padding: 'clamp(1.5rem,4vw,2.5rem)',
-        marginBottom: '1.75rem', display: 'flex', alignItems: 'center',
-        justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem',
-        boxShadow: '0 8px 32px rgba(243,156,18,0.28)', position: 'relative', overflow: 'hidden',
-      }}>
-        <div style={{ position: 'absolute', top: -50, right: -50, width: 200, height: 200, borderRadius: '50%', background: 'rgba(255,255,255,0.06)', pointerEvents: 'none' }} />
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
-          <div style={{ width: 56, height: 56, borderRadius: '16px', background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', color: '#fff', backdropFilter: 'blur(8px)', flexShrink: 0 }}>
-            <FaShoppingCart />
+        <div className="relative flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-6">
+          <div className="flex items-center gap-3 sm:gap-5 w-full sm:w-auto">
+            <div className="flex h-12 w-12 sm:h-14 sm:w-14 md:h-16 md:w-16 shrink-0 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-sm text-white shadow-lg">
+              <FaShoppingCart size={24} className="sm:size-26 md:size-28" />
+            </div>
+            <div className="space-y-1">
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white drop-shadow-sm">
+                {t('purchases.title')}
+              </h1>
+              <p className="text-sm sm:text-base text-white/90 font-medium">
+                {summary.total_purchases} {t('purchases.totalPurchases')} · تتبع طلبات الشراء والمدفوعات
+              </p>
+            </div>
           </div>
-          <div>
-            <h1 style={{ margin: 0, color: '#fff', fontSize: 'clamp(1.25rem,3vw,1.75rem)', fontWeight: 800, letterSpacing: '-0.02em' }}>{t('purchases.title')}</h1>
-            <p style={{ margin: 0, color: 'rgba(255,255,255,0.8)', fontSize: '0.9rem', marginTop: '0.25rem' }}>
-              {summary.total_purchases} {t('purchases.totalPurchases')} · تتبع طلبات الشراء والمدفوعات
-            </p>
-          </div>
+          {!isEditing && (
+            <Button
+              size="sm"
+              onClick={handleAdd}
+              className="bg-white text-amber-600 hover:bg-white/90 font-semibold shadow-lg w-full sm:w-auto"
+            >
+              <FaPlus size={12} className="sm:size-13 mr-2" />
+              {t('purchases.addPurchase')}
+            </Button>
+          )}
         </div>
-        {!isEditing && (
-          <button onClick={handleAdd} style={{ background: '#fff', border: 'none', color: '#f39c12', padding: '0.6rem 1.4rem', borderRadius: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 700, fontSize: '0.875rem', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-            <FaPlus size={13} /> {t('purchases.addPurchase')}
-          </button>
-        )}
       </div>
 
-      {/* ── Stats Grid ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '1.75rem' }}>
-        {[
-          { label: t('purchases.totalPurchases'), value: summary.total_purchases, color: '#7c3aed', bg: '#7c3aed15', icon: <FaBoxOpen /> },
-          { label: t('purchases.totalAmount'),    value: formatCurrency(summary.total_amount),    color: '#f39c12', bg: '#f39c1215', icon: <FaShoppingCart /> },
-          { label: t('purchases.totalPaid'),      value: formatCurrency(summary.total_paid),      color: '#2ecc71', bg: '#2ecc7115', icon: <FaCheckCircle /> },
-          { label: t('purchases.totalRemaining'), value: formatCurrency(summary.total_remaining), color: '#e74c3c', bg: '#e74c3c15', icon: <FaExclamationCircle /> },
-        ].map(({ label, value, color, bg, icon }) => (
-          <div key={label} style={{ background: 'var(--color-card-background)', borderRadius: '16px', padding: '1.25rem 1.5rem', border: '1px solid var(--color-border-light)', display: 'flex', alignItems: 'center', gap: '1rem', boxShadow: 'var(--shadow-card)' }}>
-            <div style={{ width: 44, height: 44, borderRadius: '12px', background: bg, color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem', flexShrink: 0 }}>{icon}</div>
-            <div>
-              <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--color-text-muted)', fontWeight: 500 }}>{label}</p>
-              <p style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, color }}>{value}</p>
-            </div>
-          </div>
-        ))}
-      </div>
+      {/* Summary Cards */}
+      {!loading && (
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5 mb-4 sm:mb-6">
+          <ShadcnCard className="group relative overflow-hidden border-border/60 shadow-lg shadow-black/5 hover:shadow-xl hover:shadow-purple-500/10 transition-all duration-300">
+            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <CardContent className="relative p-3 sm:p-4 md:p-6">
+              <div className="flex items-center justify-between mb-2 sm:mb-4">
+                <span className="text-[10px] sm:text-xs md:text-sm font-semibold text-muted-foreground tracking-wide uppercase">
+                  {t('purchases.totalPurchases')}
+                </span>
+                <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-xl bg-purple-500/10 text-purple-600 ring-1 ring-purple-500/20">
+                  <FaBoxOpen size={14} className="sm:size-18" />
+                </div>
+              </div>
+              <p className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-foreground drop-shadow-sm">
+                {summary.total_purchases}
+              </p>
+              <p className="text-[10px] sm:text-xs md:text-sm text-muted-foreground mt-1">سجل نشط</p>
+            </CardContent>
+          </ShadcnCard>
 
-      {/* ── Add / Edit Form ── */}
-      {isEditing && (
-        <div style={{ background: 'var(--color-card-background)', borderRadius: '20px', border: '2px solid #f39c1240', boxShadow: '0 4px 24px rgba(243,156,18,0.1)', padding: '1.75rem', marginBottom: '1.5rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
-            <div style={{ width: 36, height: 36, borderRadius: '10px', background: '#f39c1218', color: '#f39c12', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              {editingPurchase ? <FaShoppingCart size={14} /> : <FaPlus size={14} />}
-            </div>
-            <h3 style={{ margin: 0, fontWeight: 700, color: 'var(--color-text)', fontSize: '1rem' }}>
-              {editingPurchase ? 'تعديل سجل الشراء' : 'إضافة مشتريات جديدة'}
-            </h3>
-          </div>
-          <form onSubmit={handleSave}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem', marginBottom: '1rem' }}>
-              <FormField label={t('purchases.supplier')} name="supplier_name" type="text" value={formData.supplier_name} onChange={(e) => setFormData({ ...formData, supplier_name: e.target.value })} required />
-              <FormField label={t('purchases.date')} name="purchase_date" type="datetime-local" value={formData.purchase_date} onChange={(e) => setFormData({ ...formData, purchase_date: e.target.value })} required />
-              <FormField label={t('purchases.total')} name="total_amount" type="number" value={formData.total_amount} onChange={(e) => setFormData({ ...formData, total_amount: e.target.value })} required min="0" step="0.01" />
-              <FormField label={t('purchases.paid')} name="paid_amount" type="number" value={formData.paid_amount} onChange={(e) => setFormData({ ...formData, paid_amount: e.target.value })} min="0" step="0.01" />
-              <FormField label={t('purchases.paymentMethod')} name="payment_method" type="select" value={formData.payment_method} onChange={(e) => setFormData({ ...formData, payment_method: e.target.value })} required>
-                <option value="cash">{t('purchases.cash')}</option>
-                <option value="installment">{t('purchases.installment')}</option>
-              </FormField>
-              <FormField label={t('purchases.description')} name="description" type="textarea" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} rows={2} />
-            </div>
-            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
-              <Button type="button" onClick={resetForm} className="btn-secondary" disabled={isSaving}>{t('common.cancel')}</Button>
-              <Button type="submit" className="btn-primary" loading={isSaving}>{t('common.save')}</Button>
-            </div>
-          </form>
+          <ShadcnCard className="group relative overflow-hidden border-border/60 shadow-lg shadow-black/5 hover:shadow-xl hover:shadow-amber-500/10 transition-all duration-300">
+            <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <CardContent className="relative p-3 sm:p-4 md:p-6">
+              <div className="flex items-center justify-between mb-2 sm:mb-4">
+                <span className="text-[10px] sm:text-xs md:text-sm font-semibold text-muted-foreground tracking-wide uppercase">
+                  {t('purchases.totalAmount')}
+                </span>
+                <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 ring-1 ring-amber-500/20">
+                  <FaShoppingCart size={14} className="sm:size-18" />
+                </div>
+              </div>
+              <p className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-amber-600 dark:text-amber-400 drop-shadow-sm">
+                {formatCurrency(summary.total_amount)}
+              </p>
+              <p className="text-[10px] sm:text-xs md:text-sm text-muted-foreground mt-1">إجمالي المشتريات</p>
+            </CardContent>
+          </ShadcnCard>
+
+          <ShadcnCard className="group relative overflow-hidden border-border/60 shadow-lg shadow-black/5 hover:shadow-xl hover:shadow-emerald-500/10 transition-all duration-300">
+            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <CardContent className="relative p-3 sm:p-4 md:p-6">
+              <div className="flex items-center justify-between mb-2 sm:mb-4">
+                <span className="text-[10px] sm:text-xs md:text-sm font-semibold text-muted-foreground tracking-wide uppercase">
+                  {t('purchases.totalPaid')}
+                </span>
+                <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 ring-1 ring-emerald-500/20">
+                  <FaCheckCircle size={14} className="sm:size-18" />
+                </div>
+              </div>
+              <p className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-emerald-600 dark:text-emerald-400 drop-shadow-sm">
+                {formatCurrency(summary.total_paid)}
+              </p>
+              <p className="text-[10px] sm:text-xs md:text-sm text-muted-foreground mt-1">إجمالي المدفوع</p>
+            </CardContent>
+          </ShadcnCard>
+
+          <ShadcnCard className="group relative overflow-hidden border-border/60 shadow-lg shadow-black/5 hover:shadow-xl hover:shadow-red-500/10 transition-all duration-300">
+            <div className="absolute inset-0 bg-gradient-to-br from-red-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <CardContent className="relative p-3 sm:p-4 md:p-6">
+              <div className="flex items-center justify-between mb-2 sm:mb-4">
+                <span className="text-[10px] sm:text-xs md:text-sm font-semibold text-muted-foreground tracking-wide uppercase">
+                  {t('purchases.totalRemaining')}
+                </span>
+                <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-xl bg-red-500/10 text-red-600 ring-1 ring-red-500/20">
+                  <FaExclamationCircle size={14} className="sm:size-18" />
+                </div>
+              </div>
+              <p className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-red-600 dark:text-red-400 drop-shadow-sm">
+                {formatCurrency(summary.total_remaining)}
+              </p>
+              <p className="text-[10px] sm:text-xs md:text-sm text-muted-foreground mt-1">المتبقي</p>
+            </CardContent>
+          </ShadcnCard>
         </div>
       )}
 
-      {/* ── Purchases Table ── */}
-      <div style={{ background: 'var(--color-card-background)', borderRadius: '20px', border: '1px solid var(--color-border-light)', boxShadow: 'var(--shadow-card)', overflow: 'hidden' }}>
-        {/* Filter Bar */}
-        <div style={{ padding: '1rem 1.5rem', borderBottom: '1px solid var(--color-border-light)', display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-          {[
-            { key: 'all',       color: 'var(--color-primary)', label: t('common.all') },
-            { key: 'pending',   color: '#f39c12',              label: t('purchases.pending') },
-            { key: 'completed', color: '#2ecc71',              label: t('purchases.completed') },
-            { key: 'cancelled', color: '#e74c3c',              label: t('purchases.cancelled') },
-          ].map(({ key, color, label }) => (
-            <button key={key} onClick={() => setFilter(key)} style={{
-              padding: '0.4rem 1rem', borderRadius: '999px', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer',
-              border: filter === key ? `2px solid ${color}` : '2px solid var(--color-border-light)',
-              background: filter === key ? color + '18' : 'transparent',
-              color: filter === key ? color : 'var(--color-text-muted)',
-              transition: 'all 0.15s',
-            }}>{label}</button>
+      {/* Add/Edit Form */}
+      {isEditing && (
+        <ShadcnCard className="border-border/60 shadow-lg shadow-black/5">
+          <CardContent className="p-4 sm:p-6">
+            <h3 className="text-base sm:text-lg font-bold text-foreground mb-3 sm:mb-4">
+              {editingPurchase ? t('purchases.editPurchase') : t('purchases.addPurchase')}
+            </h3>
+            <form onSubmit={handleSave} noValidate>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 mb-3 sm:mb-4">
+                <FormField
+                  label={t('purchases.supplierName')}
+                  name="supplier_name"
+                  type="text"
+                  value={formData.supplier_name}
+                  onChange={(e) => setFormData({ ...formData, supplier_name: e.target.value })}
+                  required
+                  clearable
+                  placeholder={t('purchases.supplierNamePlaceholder')}
+                />
+                <FormField
+                  label={t('purchases.totalAmount')}
+                  name="total_amount"
+                  type="number"
+                  value={formData.total_amount}
+                  onChange={(e) => setFormData({ ...formData, total_amount: e.target.value })}
+                  required
+                  placeholder="0.00"
+                />
+                <FormField
+                  label={t('purchases.paidAmount')}
+                  name="paid_amount"
+                  type="number"
+                  value={formData.paid_amount}
+                  onChange={(e) => setFormData({ ...formData, paid_amount: e.target.value })}
+                  placeholder="0.00"
+                />
+                <FormField
+                  label={t('purchases.paymentMethod')}
+                  name="payment_method"
+                  type="select"
+                  value={formData.payment_method}
+                  onChange={(e) => setFormData({ ...formData, payment_method: e.target.value })}
+                  options={paymentMethodOptions}
+                />
+                <FormField
+                  label={t('purchases.purchaseDate')}
+                  name="purchase_date"
+                  type="datetime-local"
+                  value={formData.purchase_date}
+                  onChange={(e) => setFormData({ ...formData, purchase_date: e.target.value })}
+                  required
+                />
+                <FormField
+                  label={t('purchases.description')}
+                  name="description"
+                  type="text"
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  placeholder={t('purchases.descriptionPlaceholder')}
+                />
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button type="button" variant="outline" onClick={handleCancel} disabled={isSaving} className="text-xs sm:text-sm">
+                  {t('common.cancel')}
+                </Button>
+                <Button type="submit" loading={isSaving} className="text-xs sm:text-sm">
+                  {t('common.save')}
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </ShadcnCard>
+      )}
+
+      {/* Filter Bar */}
+      {!isEditing && (
+        <div className="flex gap-2 mb-4 sm:mb-6 overflow-x-auto pb-2">
+          {FILTER_OPTIONS.map((option) => (
+            <Button
+              key={option.value}
+              variant={filter === option.value ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setFilter(option.value)}
+              className={cn(
+                filter === option.value ? 'bg-primary text-primary-foreground' : 'text-muted-foreground',
+                'whitespace-nowrap text-xs sm:text-sm'
+              )}
+            >
+              {option.label}
+            </Button>
           ))}
         </div>
+      )}
 
-        {loading ? (
-          <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--color-text-muted)' }}>{t('common.loading')}</div>
-        ) : purchases.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '4rem' }}>
-            <div style={{ width: 72, height: 72, borderRadius: '18px', background: '#f39c1212', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem', color: '#f39c12', margin: '0 auto 1.25rem' }}><FaShoppingCart /></div>
-            <h3 style={{ color: 'var(--color-text)', margin: '0 0 0.5rem' }}>{t('purchases.noPurchases')}</h3>
-            <button onClick={handleAdd} style={{ background: '#f39c12', color: '#fff', border: 'none', padding: '0.6rem 1.5rem', borderRadius: '10px', cursor: 'pointer', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
-              <FaPlus size={12} /> {t('purchases.addPurchase')}
-            </button>
-          </div>
-        ) : (
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead>
-                <tr style={{ borderBottom: '1px solid var(--color-border-light)' }}>
-                  {[t('purchases.supplier'), t('purchases.date'), t('purchases.total'), t('purchases.paid'), t('purchases.remaining'), t('purchases.paymentMethod'), t('purchases.status'), t('common.actions')].map(h => (
-                    <th key={h} style={{ padding: '0.75rem 1rem', textAlign: 'start', fontSize: '0.75rem', fontWeight: 700, color: 'var(--color-text-muted)', whiteSpace: 'nowrap', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {purchases.map((row, index) => {
-                  const sm = STATUS_META[row.status] || STATUS_META.pending;
-                  return (
-                    <tr key={row.id || `purchase-${row.created_at}-${index}`} style={{ borderBottom: '1px solid var(--color-border-light)' }}
-                      onMouseEnter={e => e.currentTarget.style.background = 'var(--color-surface)'}
-                      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                    >
-                      <td style={{ padding: '1rem' }}>
-                        <div style={{ fontWeight: 700, color: 'var(--color-text)', fontSize: '0.9rem' }}>{row.supplier_name}</div>
-                        {row.description && <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '0.15rem', maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{row.description}</div>}
-                      </td>
-                      <td style={{ padding: '1rem', fontSize: '0.85rem', color: 'var(--color-text-muted)', whiteSpace: 'nowrap' }}>
-                        {new Date(row.purchase_date).toLocaleDateString(i18n.language === 'ar' ? 'ar-SA' : 'en-US')}
-                      </td>
-                      <td style={{ padding: '1rem', fontWeight: 700, color: 'var(--color-text)', whiteSpace: 'nowrap' }}>{formatCurrency(row.total_amount)}</td>
-                      <td style={{ padding: '1rem', fontWeight: 600, color: '#2ecc71', whiteSpace: 'nowrap' }}>{formatCurrency(row.paid_amount)}</td>
-                      <td style={{ padding: '1rem', fontWeight: 700, color: row.remaining_amount > 0 ? '#e74c3c' : '#2ecc71', whiteSpace: 'nowrap' }}>{formatCurrency(row.remaining_amount)}</td>
-                      <td style={{ padding: '1rem' }}>
-                        <span style={{ padding: '0.3rem 0.75rem', borderRadius: '999px', fontSize: '0.75rem', fontWeight: 600, background: row.payment_method === 'cash' ? '#2ecc7115' : '#f39c1215', color: row.payment_method === 'cash' ? '#2ecc71' : '#f39c12' }}>
-                          {row.payment_method === 'cash' ? t('purchases.cash') : t('purchases.installment')}
-                        </span>
-                      </td>
-                      <td style={{ padding: '1rem' }}>
-                        <span style={{ padding: '0.3rem 0.75rem', borderRadius: '999px', fontSize: '0.75rem', fontWeight: 600, background: sm.bg, color: sm.color }}>{sm.label}</span>
-                      </td>
-                      <td style={{ padding: '1rem' }}>
-                        <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'nowrap' }}>
-                          {row.remaining_amount > 0 && row.status === 'pending' && (
-                            <button onClick={() => { const amount = prompt('أدخل مبلغ الدفعة:', row.remaining_amount); if (amount) handleMakePayment(row.id, parseFloat(amount)); }} style={{ padding: '0.35rem 0.65rem', borderRadius: '8px', background: '#2ecc7115', color: '#2ecc71', border: '1px solid #2ecc7130', cursor: 'pointer', fontSize: '0.72rem', fontWeight: 600 }}>
-                              {t('purchases.pay')}
-                            </button>
-                          )}
-                          <button onClick={() => handleEdit(row)} style={{ width: 30, height: 30, borderRadius: '8px', background: 'var(--color-surface)', color: 'var(--color-text-muted)', border: '1px solid var(--color-border-light)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem' }}>✏️</button>
-                          <button onClick={() => setConfirmDeleteId(row.id)} style={{ width: 30, height: 30, borderRadius: '8px', background: '#e74c3c12', color: '#e74c3c', border: '1px solid #e74c3c30', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem' }}>🗑</button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-
-      <ConfirmDialog isOpen={!!confirmDeleteId} title="حذف سجل المشتريات" message="هل أنت متأكد من حذف هذا السجل؟ لا يمكن التراجع عن هذا الإجراء." confirmLabel="حذف" cancelLabel={t('common.cancel')} variant="danger" loading={isDeleting} onConfirm={handleDelete} onCancel={() => setConfirmDeleteId(null)} />
+      {/* Purchases Table */}
+      {!isEditing && (
+        <ShadcnCard className="border-border/60 shadow-lg shadow-black/5">
+          <CardContent className="pt-4 sm:pt-6">
+            {loading ? (
+              <div className="text-center py-8 sm:py-12 text-muted-foreground text-xs sm:text-sm">...</div>
+            ) : purchases.length === 0 ? (
+              <div className="text-center py-8 sm:py-12">
+                <div className="flex h-12 w-12 sm:h-16 sm:w-16 mx-auto mb-3 sm:mb-4 items-center justify-center rounded-xl bg-muted text-muted-foreground text-xl sm:text-2xl">
+                  <FaShoppingCart aria-hidden="true" />
+                </div>
+                <h3 className="text-sm sm:text-base font-semibold text-foreground mb-1 sm:mb-2">{t('purchases.noPurchases')}</h3>
+                <p className="text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4">{t('purchases.addFirstPurchase')}</p>
+                <Button size="sm" onClick={handleAdd} className="text-xs sm:text-sm">
+                  <FaPlus size={11} className="sm:size-12 mr-1" aria-hidden="true" /> {t('purchases.addPurchase')}
+                </Button>
+              </div>
+            ) : (
+              <Table
+                columns={columns}
+                data={purchases}
+                onRowClick={handleViewPurchase}
+                emptyMessage={t('purchases.noPurchases')}
+              />
+            )}
+          </CardContent>
+        </ShadcnCard>
+      )}
     </div>
   );
 };

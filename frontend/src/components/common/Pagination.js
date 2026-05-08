@@ -6,7 +6,7 @@ const Pagination = ({
   totalPages,
   onPageChange,
   showFirstLast = true,
-  maxVisiblePages = 5
+  maxVisiblePages = 5,
 }) => {
   if (totalPages <= 1) return null;
 
@@ -84,7 +84,7 @@ const Pagination = ({
       )}
 
       {/* Page numbers */}
-      {visiblePages.map(page => (
+      {visiblePages.map((page) => (
         <button
           key={page}
           onClick={() => onPageChange(page)}

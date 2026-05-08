@@ -57,9 +57,7 @@ const useFormValidation = (initialValues, validators = {}) => {
       }
     });
     setErrors(newErrors);
-    setTouched(
-      Object.keys(validators).reduce((acc, k) => ({ ...acc, [k]: true }), {})
-    );
+    setTouched(Object.keys(validators).reduce((acc, k) => ({ ...acc, [k]: true }), {}));
     return isValid;
   }, [validators, validateField, values]);
 

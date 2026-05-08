@@ -24,33 +24,38 @@ const Scanner = ({ onScan }) => {
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
     canvas.getContext('2d').drawImage(video, 0, 0);
-    
+
     canvas.toBlob((blob) => {
       const formData = new FormData();
       formData.append('file', blob, 'scan.jpg');
-      
+
       // Send to backend
       fetch('/api/scanning/scan', {
         method: 'POST',
         body: formData,
       })
-      .then(response => response.json())
-      .then(data => onScan(data))
-      .catch(error => console.error('Error scanning:', error));
+        .then((response) => response.json())
+        .then((data) => onScan(data))
+        .catch((error) => console.error('Error scanning:', error));
     });
   };
 
   const stopCamera = () => {
     const stream = videoRef.current.srcObject;
     if (stream) {
-      stream.getTracks().forEach(track => track.stop());
+      stream.getTracks().forEach((track) => track.stop());
     }
     setIsScanning(false);
   };
 
   return (
     <div className="scanner">
-      <video ref={videoRef} autoPlay playsInline style={{ display: isScanning ? 'block' : 'none' }} />
+      <video
+        ref={videoRef}
+        autoPlay
+        playsInline
+        style={{ display: isScanning ? 'block' : 'none' }}
+      />
       <canvas ref={canvasRef} style={{ display: 'none' }} />
       {!isScanning ? (
         <Button onClick={startCamera}>{t('scanning.startCamera')}</Button>

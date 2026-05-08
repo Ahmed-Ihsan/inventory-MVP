@@ -51,7 +51,7 @@ const StockList = () => {
       await apiService.createStockMovement({
         item_id: selectedItem.id,
         quantity_change: quantityChange,
-        reason: reason
+        reason: reason,
       });
       setIsEditing(false);
       setSelectedItem(null);
@@ -90,14 +90,16 @@ const StockList = () => {
       render: (row) => {
         const isLowStock = row.current_stock <= row.min_stock_level;
         return (
-          <span style={{
-            fontWeight: '600',
-            color: isLowStock ? 'var(--color-danger)' : 'var(--color-success)'
-          }}>
+          <span
+            style={{
+              fontWeight: '600',
+              color: isLowStock ? 'var(--color-danger)' : 'var(--color-success)',
+            }}
+          >
             {row.current_stock}
           </span>
         );
-      }
+      },
     },
     { header: t('stock.minStockLevel'), accessor: 'min_stock_level' },
     {
@@ -106,7 +108,7 @@ const StockList = () => {
       render: (row) => {
         const status = getStockStatus(row.current_stock, row.min_stock_level);
         return <StatusBadge status={status} />;
-      }
+      },
     },
     {
       header: t('common.actions'),
@@ -128,7 +130,14 @@ const StockList = () => {
       {isEditing && selectedItem && (
         <Card style={{ marginBottom: '1.5rem' }}>
           <form onSubmit={handleSaveAdjustment}>
-            <div style={{ marginBottom: '1rem', padding: '1rem', backgroundColor: '#f8f9fa', borderRadius: '8px' }}>
+            <div
+              style={{
+                marginBottom: '1rem',
+                padding: '1rem',
+                backgroundColor: '#f8f9fa',
+                borderRadius: '8px',
+              }}
+            >
               <p style={{ margin: 0, fontWeight: 'bold' }}>{selectedItem.name}</p>
               <p style={{ margin: '0.5rem 0 0', color: '#6c757d' }}>
                 {t('stock.currentStock')}: <strong>{selectedItem.current_stock}</strong>
@@ -159,20 +168,30 @@ const StockList = () => {
             </FormField>
 
             {quantityChange !== 0 && (
-              <div style={{
-                marginTop: '1rem',
-                padding: '1rem',
-                backgroundColor: quantityChange > 0 ? '#d4edda' : '#f8d7da',
-                borderRadius: '8px',
-                textAlign: 'center'
-              }}>
+              <div
+                style={{
+                  marginTop: '1rem',
+                  padding: '1rem',
+                  backgroundColor: quantityChange > 0 ? '#d4edda' : '#f8d7da',
+                  borderRadius: '8px',
+                  textAlign: 'center',
+                }}
+              >
                 <p style={{ margin: 0, fontSize: '0.9rem', color: '#155724' }}>
-                  {t('stock.newStock')}: <strong style={{ fontSize: '1.2rem' }}>{getNewStock()}</strong>
+                  {t('stock.newStock')}:{' '}
+                  <strong style={{ fontSize: '1.2rem' }}>{getNewStock()}</strong>
                 </p>
               </div>
             )}
 
-            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end', marginTop: '1.5rem' }}>
+            <div
+              style={{
+                display: 'flex',
+                gap: '1rem',
+                justifyContent: 'flex-end',
+                marginTop: '1.5rem',
+              }}
+            >
               <Button type="button" onClick={handleCancel} className="btn-secondary">
                 {t('common.cancel')}
               </Button>
@@ -185,13 +204,9 @@ const StockList = () => {
       )}
 
       {loading ? (
-        <div style={{ textAlign: 'center', padding: '2rem' }}>
-          {t('common.loading')}
-        </div>
+        <div style={{ textAlign: 'center', padding: '2rem' }}>{t('common.loading')}</div>
       ) : stockLevels.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '2rem' }}>
-          {t('stock.noItems')}
-        </div>
+        <div style={{ textAlign: 'center', padding: '2rem' }}>{t('stock.noItems')}</div>
       ) : (
         <Table columns={columns} data={stockLevels} />
       )}

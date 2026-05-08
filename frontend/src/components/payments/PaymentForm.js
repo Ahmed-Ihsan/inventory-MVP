@@ -43,7 +43,9 @@ const PaymentForm = ({ onSave, onCancel, payment = null }) => {
         invoice_id: payment.invoice_id || '',
         customer_name: payment.customer_name || '',
         customer_phone: payment.customer_phone || '',
-        transaction_date: payment.transaction_date ? new Date(payment.transaction_date).toISOString().slice(0, 16) : new Date().toISOString().slice(0, 16),
+        transaction_date: payment.transaction_date
+          ? new Date(payment.transaction_date).toISOString().slice(0, 16)
+          : new Date().toISOString().slice(0, 16),
         due_date: payment.due_date ? new Date(payment.due_date).toISOString().slice(0, 16) : '',
         status: payment.status || 'pending',
         reference_number: payment.reference_number || '',
@@ -69,7 +71,7 @@ const PaymentForm = ({ onSave, onCancel, payment = null }) => {
   const loadInvoices = async () => {
     try {
       const invoicesData = await apiService.getSalesInvoices();
-      setInvoices(invoicesData.filter(inv => inv.remaining_amount > 0));
+      setInvoices(invoicesData.filter((inv) => inv.remaining_amount > 0));
     } catch (error) {
       console.error('Error loading invoices:', error);
     }
@@ -78,7 +80,7 @@ const PaymentForm = ({ onSave, onCancel, payment = null }) => {
   const loadCustomers = async () => {
     try {
       const invoicesData = await apiService.getSalesInvoices();
-      const uniqueCustomers = [...new Set(invoicesData.map(inv => inv.customer_name))];
+      const uniqueCustomers = [...new Set(invoicesData.map((inv) => inv.customer_name))];
       setCustomers(uniqueCustomers);
     } catch (error) {
       console.error('Error loading customers:', error);
@@ -87,7 +89,7 @@ const PaymentForm = ({ onSave, onCancel, payment = null }) => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -98,17 +100,17 @@ const PaymentForm = ({ onSave, onCancel, payment = null }) => {
       const due = new Date(formData.due_date);
       const now = new Date();
       const newStatus = due < now ? 'overdue' : 'pending';
-      setFormData(prev => ({ ...prev, status: newStatus }));
+      setFormData((prev) => ({ ...prev, status: newStatus }));
     } else if (formData.payment_type === 'paid') {
-      setFormData(prev => ({ ...prev, status: 'completed' }));
+      setFormData((prev) => ({ ...prev, status: 'completed' }));
     }
   }, [formData.payment_type, formData.due_date]);
 
   // Handle invoice selection
   const handleInvoiceChange = (invoiceId) => {
-    const selectedInvoice = invoices.find(inv => inv.id === parseInt(invoiceId));
+    const selectedInvoice = invoices.find((inv) => inv.id === parseInt(invoiceId));
     if (selectedInvoice) {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         invoice_id: invoiceId,
         customer_name: selectedInvoice.customer_name,
@@ -116,40 +118,42 @@ const PaymentForm = ({ onSave, onCancel, payment = null }) => {
         amount: selectedInvoice.remaining_amount.toString(),
       }));
     } else {
-      setFormData(prev => ({ ...prev, invoice_id: invoiceId }));
+      setFormData((prev) => ({ ...prev, invoice_id: invoiceId }));
     }
   };
 
   // Calculate balance for selected invoice
   const getInvoiceBalance = () => {
     if (!formData.invoice_id) return 0;
-    const invoice = invoices.find(inv => inv.id === parseInt(formData.invoice_id));
+    const invoice = invoices.find((inv) => inv.id === parseInt(formData.invoice_id));
     return invoice ? invoice.remaining_amount : 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     // Validation
     if (!formData.amount || parseFloat(formData.amount) <= 0) {
       alert('يرجى إدخال مبلغ صحيح');
       return;
     }
-    
+
     if (formData.payment_type === 'debt' && !formData.due_date) {
       alert('يرجى إدخال تاريخ الاستحقاق للديون');
       return;
     }
-    
+
     // Check for overpayment
     if (formData.invoice_id) {
       const balance = getInvoiceBalance();
       if (parseFloat(formData.amount) > balance) {
-        const confirm = window.confirm(`المبلغ (${formData.amount}) يتجاوز الرصيد المتبقي (${balance}). هل تريد المتابعة؟`);
+        const confirm = window.confirm(
+          `المبلغ (${formData.amount}) يتجاوز الرصيد المتبقي (${balance}). هل تريد المتابعة؟`
+        );
         if (!confirm) return;
       }
     }
-    
+
     setIsSubmitting(true);
     try {
       await onSave({
@@ -188,7 +192,7 @@ const PaymentForm = ({ onSave, onCancel, payment = null }) => {
         onChange={(e) => handleInvoiceChange(e.target.value)}
       >
         <option value="">بدون ربط فاتورة</option>
-        {invoices.map(inv => (
+        {invoices.map((inv) => (
           <option key={inv.id} value={inv.id}>
             فاتورة #{inv.id} - {inv.customer_name} (المتبقي: {inv.remaining_amount})
           </option>
@@ -196,7 +200,15 @@ const PaymentForm = ({ onSave, onCancel, payment = null }) => {
       </FormField>
 
       {formData.invoice_id && (
-        <div style={{ padding: '0.75rem', background: '#f0f9ff', borderRadius: '8px', marginBottom: '1rem', border: '1px solid #bae6fd' }}>
+        <div
+          style={{
+            padding: '0.75rem',
+            background: '#f0f9ff',
+            borderRadius: '8px',
+            marginBottom: '1rem',
+            border: '1px solid #bae6fd',
+          }}
+        >
           <div style={{ fontSize: '0.875rem', color: '#0369a1', fontWeight: 600 }}>
             الرصيد المتبقي: {formData.amount}
           </div>
@@ -296,8 +308,10 @@ const PaymentForm = ({ onSave, onCancel, payment = null }) => {
         onChange={handleChange}
       >
         <option value="">{t('common.select')}...</option>
-        {items.map(item => (
-          <option key={item.id} value={item.id}>{item.name} ({item.sku})</option>
+        {items.map((item) => (
+          <option key={item.id} value={item.id}>
+            {item.name} ({item.sku})
+          </option>
         ))}
       </FormField>
 
@@ -332,7 +346,9 @@ const PaymentForm = ({ onSave, onCancel, payment = null }) => {
         <option value="overdue">{t('payments.overdue')}</option>
       </FormField>
 
-      <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end', marginTop: '1.5rem' }}>
+      <div
+        style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end', marginTop: '1.5rem' }}
+      >
         <Button type="button" onClick={onCancel} className="btn-secondary" disabled={isSubmitting}>
           {t('common.cancel')}
         </Button>

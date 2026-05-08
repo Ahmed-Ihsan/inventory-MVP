@@ -13,20 +13,22 @@ export const InfoTooltip = ({ content, children }) => {
         ℹ️
       </span>
       {show && (
-        <span style={{
-          position: 'absolute',
-          bottom: '100%',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          backgroundColor: 'var(--color-dark)',
-          color: 'white',
-          padding: '0.5rem',
-          borderRadius: '4px',
-          fontSize: '0.875rem',
-          whiteSpace: 'nowrap',
-          zIndex: 1000,
-          marginBottom: '0.25rem'
-        }}>
+        <span
+          style={{
+            position: 'absolute',
+            bottom: '100%',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            backgroundColor: 'var(--color-dark)',
+            color: 'white',
+            padding: '0.5rem',
+            borderRadius: '4px',
+            fontSize: '0.875rem',
+            whiteSpace: 'nowrap',
+            zIndex: 1000,
+            marginBottom: '0.25rem',
+          }}
+        >
           {content || children}
         </span>
       )}
@@ -39,27 +41,26 @@ const Tooltip = ({ text, children }) => {
 
   return (
     <span style={{ position: 'relative', display: 'inline-block' }}>
-      <span
-        onMouseEnter={() => setShow(true)}
-        onMouseLeave={() => setShow(false)}
-      >
+      <span onMouseEnter={() => setShow(true)} onMouseLeave={() => setShow(false)}>
         {children}
       </span>
       {show && (
-        <span style={{
-          position: 'absolute',
-          bottom: '100%',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          backgroundColor: 'var(--color-dark)',
-          color: 'white',
-          padding: '0.25rem 0.5rem',
-          borderRadius: '4px',
-          fontSize: '0.75rem',
-          whiteSpace: 'nowrap',
-          zIndex: 1000,
-          marginBottom: '0.25rem'
-        }}>
+        <span
+          style={{
+            position: 'absolute',
+            bottom: '100%',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            backgroundColor: 'var(--color-dark)',
+            color: 'white',
+            padding: '0.25rem 0.5rem',
+            borderRadius: '4px',
+            fontSize: '0.75rem',
+            whiteSpace: 'nowrap',
+            zIndex: 1000,
+            marginBottom: '0.25rem',
+          }}
+        >
           {text}
         </span>
       )}

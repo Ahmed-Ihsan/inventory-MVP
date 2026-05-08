@@ -1,13 +1,14 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuthContext } from '../../context/AuthContext';
+import Loading from './Loading';
 
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuthContext();
   const location = useLocation();
 
   if (loading) {
-    return <div>Loading...</div>; // Or a proper loading component
+    return <Loading />;
   }
 
   if (!user) {

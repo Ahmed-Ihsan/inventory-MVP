@@ -44,9 +44,7 @@ const Toast = ({ message, type = 'info', onClose, duration = 5000 }) => {
         animation: 'slideIn 0.3s ease-out',
       }}
     >
-      <span style={{ color: colorMap[type], fontSize: '1.2rem' }}>
-        {iconMap[type]}
-      </span>
+      <span style={{ color: colorMap[type], fontSize: '1.2rem' }}>{iconMap[type]}</span>
       <span style={{ flex: 1 }}>{message}</span>
       <button
         onClick={onClose}

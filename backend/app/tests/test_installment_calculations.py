@@ -86,7 +86,7 @@ def test_refund_calculation():
     sale.paid_months -= 1
     
     # Recalculate remaining (excluding refunded payment)
-    total_paid = sale.down_payment + sum(p.amount for p in sale.payments if p.id != payment_to_refund.id)
+    total_paid = sale.down_payment + sum(p.amount for p in sale.payments if p is not payment_to_refund)
     sale.remaining_amount = max(round(sale.total_amount - total_paid, 2), 0)
     
     # Expected: 500 - (50 + 150) = 300

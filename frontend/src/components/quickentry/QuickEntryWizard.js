@@ -1,7 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-  FaPlus, FaTimes, FaBox, FaShoppingCart, FaMoneyBillWave,
-  FaChevronRight, FaChevronLeft, FaCheck, FaBolt,
+  FaPlus,
+  FaTimes,
+  FaBox,
+  FaShoppingCart,
+  FaMoneyBillWave,
+  FaChevronRight,
+  FaChevronLeft,
+  FaCheck,
+  FaBolt,
 } from 'react-icons/fa';
 import { useToast } from '../../context/ToastContext';
 import FormField from '../common/FormField';
@@ -34,12 +41,12 @@ const TYPES = {
 };
 
 const INITIAL = {
-  item: { 
-    name: '', 
-    sku: '', 
-    category_id: '', 
-    description: '', 
-    price: '', 
+  item: {
+    name: '',
+    sku: '',
+    category_id: '',
+    description: '',
+    price: '',
     min_stock_level: '0',
     cost_price: '0',
     initial_stock: '0',
@@ -115,13 +122,26 @@ const STEP_VALIDATORS = {
 };
 
 const REVIEW_LABELS = {
-  name: 'الاسم', sku: 'الرمز', price: 'السعر', min_stock_level: 'الحد الأدنى',
-  supplier_name: 'المورد', purchase_date: 'تاريخ الشراء',
-  total_amount: 'الإجمالي', paid_amount: 'المدفوع', payment_method: 'طريقة الدفع',
-  payment_type: 'نوع الدفعة', amount: 'المبلغ', transaction_date: 'تاريخ المعاملة',
-  due_date: 'تاريخ الاستحقاق', status: 'الحالة',
-  cost_price: 'سعر التكلفة', initial_stock: 'الكمية الأولية',
-  supplier: 'المورد', unit_of_measure: 'وحدة القياس', expiry_date: 'تاريخ الانتهاء', batch_number: 'رقم الدفعة',
+  name: 'الاسم',
+  sku: 'الرمز',
+  price: 'السعر',
+  min_stock_level: 'الحد الأدنى',
+  supplier_name: 'المورد',
+  purchase_date: 'تاريخ الشراء',
+  total_amount: 'الإجمالي',
+  paid_amount: 'المدفوع',
+  payment_method: 'طريقة الدفع',
+  payment_type: 'نوع الدفعة',
+  amount: 'المبلغ',
+  transaction_date: 'تاريخ المعاملة',
+  due_date: 'تاريخ الاستحقاق',
+  status: 'الحالة',
+  cost_price: 'سعر التكلفة',
+  initial_stock: 'الكمية الأولية',
+  supplier: 'المورد',
+  unit_of_measure: 'وحدة القياس',
+  expiry_date: 'تاريخ الانتهاء',
+  batch_number: 'رقم الدفعة',
 };
 
 // ─── Component ─────────────────────────────────────────────────────────────────
@@ -154,9 +174,17 @@ const QuickEntryWizard = ({ isOpen, onClose, onOpen }) => {
     if (!isOpen) return;
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
-    apiService.getCategories().then(setCategories).catch(() => {});
-    apiService.getItems().then(setItems).catch(() => {});
-    return () => { document.body.style.overflow = prev; };
+    apiService
+      .getCategories()
+      .then(setCategories)
+      .catch(() => {});
+    apiService
+      .getItems()
+      .then(setItems)
+      .catch(() => {});
+    return () => {
+      document.body.style.overflow = prev;
+    };
   }, [isOpen]);
 
   const close = useCallback(() => {
@@ -199,7 +227,10 @@ const QuickEntryWizard = ({ isOpen, onClose, onOpen }) => {
     const validate = STEP_VALIDATORS[selectedType]?.[stepIndex];
     if (validate) {
       const errs = validate(values);
-      if (Object.keys(errs).length) { setErrors(errs); return; }
+      if (Object.keys(errs).length) {
+        setErrors(errs);
+        return;
+      }
     }
     setErrors({});
     transition('next', () => setStep((s) => s + 1));
@@ -208,7 +239,10 @@ const QuickEntryWizard = ({ isOpen, onClose, onOpen }) => {
   const back = () => {
     setErrors({});
     if (step <= 1) {
-      transition('prev', () => { setSelectedType(null); setStep(0); });
+      transition('prev', () => {
+        setSelectedType(null);
+        setStep(0);
+      });
     } else {
       transition('prev', () => setStep((s) => s - 1));
     }
@@ -232,8 +266,7 @@ const QuickEntryWizard = ({ isOpen, onClose, onOpen }) => {
           ...values,
           total_amount: parseFloat(values.total_amount),
           paid_amount: parseFloat(values.paid_amount) || 0,
-          remaining_amount:
-            parseFloat(values.total_amount) - (parseFloat(values.paid_amount) || 0),
+          remaining_amount: parseFloat(values.total_amount) - (parseFloat(values.paid_amount) || 0),
           purchase_date: new Date(values.purchase_date).toISOString(),
           status: 'pending',
         });
@@ -272,191 +305,360 @@ const QuickEntryWizard = ({ isOpen, onClose, onOpen }) => {
   );
 
   const renderItemStep = () => {
-    if (step === 1) return (
-      <>
-        <FormField label="اسم الصنف" name="name" value={values.name} onChange={handleChange}
-          error={errors.name} required clearable placeholder="مثال: أسبرين 500 ملغ" 
-          style={{ marginBottom: '1.25rem' }}
-        />
-        <FormField label="الرمز (SKU)" name="sku" value={values.sku} onChange={handleChange}
-          error={errors.sku} required clearable placeholder="مثال: ASP-500"
-          style={{ marginBottom: '1.25rem' }}
-        />
-        <FormField label="الفئة" name="category_id" type="select" value={values.category_id} onChange={handleChange}
-          style={{ marginBottom: '1.25rem' }}
-        >
-          <option value="">-- اختر الفئة --</option>
-          {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-        </FormField>
-        <FormField label="الوصف" name="description" type="textarea" value={values.description}
-          onChange={handleChange} rows={2} maxLength={200} showCount
-          style={{ marginBottom: '1.25rem' }}
-        />
-      </>
-    );
-    if (step === 2) return (
-      <>
-        <FormField label="الكمية الأولية" name="initial_stock" type="number"
-          value={values.initial_stock} onChange={handleChange} error={errors.initial_stock}
-          required min="0" help="الكمية المتاحة في المخزون عند الإضافة"
-          style={{ marginBottom: '1.25rem' }}
-        />
-        <FormField label="المورد" name="supplier" value={values.supplier}
-          onChange={handleChange} clearable placeholder="اسم المورد (اختياري)"
-          style={{ marginBottom: '1.25rem' }}
-        />
-        <FormField label="وحدة القياس" name="unit_of_measure" type="select"
-          value={values.unit_of_measure} onChange={handleChange}
-          style={{ marginBottom: '1.25rem' }}
-        >
-          <option value="piece">قطعة</option>
-          <option value="box">علبة</option>
-          <option value="bottle">زجاجة</option>
-          <option value="pack">رزمة</option>
-          <option value="kg">كيلوغرام</option>
-          <option value="liter">لتر</option>
-          <option value="unit">وحدة</option>
-        </FormField>
-        <FormField label="تاريخ الانتهاء" name="expiry_date" type="date"
-          value={values.expiry_date} onChange={handleChange}
-          style={{ marginBottom: '1.25rem' }}
-        />
-        <FormField label="رقم الدفعة" name="batch_number" value={values.batch_number}
-          onChange={handleChange} clearable placeholder="رقم الدفعة (اختياري)"
-          style={{ marginBottom: '1.25rem' }}
-        />
-      </>
-    );
-    if (step === 3) return (
-      <>
-        <FormField label="سعر البيع" name="price" type="number" value={values.price}
-          onChange={handleChange} error={errors.price} required min="0" step="0.01" prefix="IQD"
-          style={{ marginBottom: '1.25rem' }}
-        />
-        <FormField label="سعر التكلفة" name="cost_price" type="number"
-          value={values.cost_price} onChange={handleChange} min="0" step="0.01" prefix="IQD"
-          help="سعر الشراء من المورد"
-          style={{ marginBottom: '1.25rem' }}
-        />
-        <FormField label="الحد الأدنى للمخزون" name="min_stock_level" type="number"
-          value={values.min_stock_level} onChange={handleChange} min="0"
-          help="تنبيه تلقائي عند الوصول لهذا الحد"
-          style={{ marginBottom: '1.25rem' }}
-        />
-      </>
-    );
+    if (step === 1)
+      return (
+        <>
+          <FormField
+            label="اسم الصنف"
+            name="name"
+            value={values.name}
+            onChange={handleChange}
+            error={errors.name}
+            required
+            clearable
+            placeholder="مثال: أسبرين 500 ملغ"
+            style={{ marginBottom: '1.25rem' }}
+          />
+          <FormField
+            label="الرمز (SKU)"
+            name="sku"
+            value={values.sku}
+            onChange={handleChange}
+            error={errors.sku}
+            required
+            clearable
+            placeholder="مثال: ASP-500"
+            style={{ marginBottom: '1.25rem' }}
+          />
+          <FormField
+            label="الفئة"
+            name="category_id"
+            type="select"
+            value={values.category_id}
+            onChange={handleChange}
+            style={{ marginBottom: '1.25rem' }}
+          >
+            <option value="">-- اختر الفئة --</option>
+            {categories.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </FormField>
+          <FormField
+            label="الوصف"
+            name="description"
+            type="textarea"
+            value={values.description}
+            onChange={handleChange}
+            rows={2}
+            maxLength={200}
+            showCount
+            style={{ marginBottom: '1.25rem' }}
+          />
+        </>
+      );
+    if (step === 2)
+      return (
+        <>
+          <FormField
+            label="الكمية الأولية"
+            name="initial_stock"
+            type="number"
+            value={values.initial_stock}
+            onChange={handleChange}
+            error={errors.initial_stock}
+            required
+            min="0"
+            help="الكمية المتاحة في المخزون عند الإضافة"
+            style={{ marginBottom: '1.25rem' }}
+          />
+          <FormField
+            label="المورد"
+            name="supplier"
+            value={values.supplier}
+            onChange={handleChange}
+            clearable
+            placeholder="اسم المورد (اختياري)"
+            style={{ marginBottom: '1.25rem' }}
+          />
+          <FormField
+            label="وحدة القياس"
+            name="unit_of_measure"
+            type="select"
+            value={values.unit_of_measure}
+            onChange={handleChange}
+            style={{ marginBottom: '1.25rem' }}
+          >
+            <option value="piece">قطعة</option>
+            <option value="box">علبة</option>
+            <option value="bottle">زجاجة</option>
+            <option value="pack">رزمة</option>
+            <option value="kg">كيلوغرام</option>
+            <option value="liter">لتر</option>
+            <option value="unit">وحدة</option>
+          </FormField>
+          <FormField
+            label="تاريخ الانتهاء"
+            name="expiry_date"
+            type="date"
+            value={values.expiry_date}
+            onChange={handleChange}
+            style={{ marginBottom: '1.25rem' }}
+          />
+          <FormField
+            label="رقم الدفعة"
+            name="batch_number"
+            value={values.batch_number}
+            onChange={handleChange}
+            clearable
+            placeholder="رقم الدفعة (اختياري)"
+            style={{ marginBottom: '1.25rem' }}
+          />
+        </>
+      );
+    if (step === 3)
+      return (
+        <>
+          <FormField
+            label="سعر البيع"
+            name="price"
+            type="number"
+            value={values.price}
+            onChange={handleChange}
+            error={errors.price}
+            required
+            min="0"
+            step="0.01"
+            prefix="IQD"
+            style={{ marginBottom: '1.25rem' }}
+          />
+          <FormField
+            label="سعر التكلفة"
+            name="cost_price"
+            type="number"
+            value={values.cost_price}
+            onChange={handleChange}
+            min="0"
+            step="0.01"
+            prefix="IQD"
+            help="سعر الشراء من المورد"
+            style={{ marginBottom: '1.25rem' }}
+          />
+          <FormField
+            label="الحد الأدنى للمخزون"
+            name="min_stock_level"
+            type="number"
+            value={values.min_stock_level}
+            onChange={handleChange}
+            min="0"
+            help="تنبيه تلقائي عند الوصول لهذا الحد"
+            style={{ marginBottom: '1.25rem' }}
+          />
+        </>
+      );
     return renderReview();
   };
 
   const renderPurchaseStep = () => {
-    if (step === 1) return (
-      <>
-        <FormField label="اسم المورد" name="supplier_name" value={values.supplier_name}
-          onChange={handleChange} error={errors.supplier_name} required clearable
-          placeholder="اسم الشركة أو المورد"
-          style={{ marginBottom: '1.25rem' }}
-        />
-        <FormField label="تاريخ الشراء" name="purchase_date" type="datetime-local"
-          value={values.purchase_date} onChange={handleChange} required
-          style={{ marginBottom: '1.25rem' }}
-        />
-        <FormField label="ملاحظات" name="description" type="textarea"
-          value={values.description} onChange={handleChange} rows={2}
-          style={{ marginBottom: '1.25rem' }}
-        />
-      </>
-    );
-    if (step === 2) return (
-      <>
-        <FormField label="المبلغ الإجمالي" name="total_amount" type="number"
-          value={values.total_amount} onChange={handleChange} error={errors.total_amount}
-          required min="0" step="0.01" prefix="IQD"
-          style={{ marginBottom: '1.25rem' }}
-        />
-        <FormField label="المبلغ المدفوع" name="paid_amount" type="number"
-          value={values.paid_amount} onChange={handleChange} min="0" step="0.01" prefix="IQD"
-          style={{ marginBottom: '1.25rem' }}
-        />
-        <FormField label="طريقة الدفع" name="payment_method" type="select"
-          value={values.payment_method} onChange={handleChange}
-          style={{ marginBottom: '1.25rem' }}
-        >
-          <option value="cash">نقدي</option>
-          <option value="installment">أقساط</option>
-        </FormField>
-        {values.total_amount !== '' && (
-          <div style={{
-            padding: '1rem',
-            borderRadius: '12px',
-            background: 'var(--color-surface)',
-            border: '1px solid var(--color-border-light)',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-          }}>
-            <span style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', fontWeight: 500 }}>المتبقي:</span>
-            <strong style={{ 
-              color: '#ef4444',
-              fontSize: '1.1rem',
-              fontWeight: 700,
-            }}>
-              {(parseFloat(values.total_amount || 0) - parseFloat(values.paid_amount || 0)).toLocaleString('ar-IQ')} IQD
-            </strong>
-          </div>
-        )}
-      </>
-    );
+    if (step === 1)
+      return (
+        <>
+          <FormField
+            label="اسم المورد"
+            name="supplier_name"
+            value={values.supplier_name}
+            onChange={handleChange}
+            error={errors.supplier_name}
+            required
+            clearable
+            placeholder="اسم الشركة أو المورد"
+            style={{ marginBottom: '1.25rem' }}
+          />
+          <FormField
+            label="تاريخ الشراء"
+            name="purchase_date"
+            type="datetime-local"
+            value={values.purchase_date}
+            onChange={handleChange}
+            required
+            style={{ marginBottom: '1.25rem' }}
+          />
+          <FormField
+            label="ملاحظات"
+            name="description"
+            type="textarea"
+            value={values.description}
+            onChange={handleChange}
+            rows={2}
+            style={{ marginBottom: '1.25rem' }}
+          />
+        </>
+      );
+    if (step === 2)
+      return (
+        <>
+          <FormField
+            label="المبلغ الإجمالي"
+            name="total_amount"
+            type="number"
+            value={values.total_amount}
+            onChange={handleChange}
+            error={errors.total_amount}
+            required
+            min="0"
+            step="0.01"
+            prefix="IQD"
+            style={{ marginBottom: '1.25rem' }}
+          />
+          <FormField
+            label="المبلغ المدفوع"
+            name="paid_amount"
+            type="number"
+            value={values.paid_amount}
+            onChange={handleChange}
+            min="0"
+            step="0.01"
+            prefix="IQD"
+            style={{ marginBottom: '1.25rem' }}
+          />
+          <FormField
+            label="طريقة الدفع"
+            name="payment_method"
+            type="select"
+            value={values.payment_method}
+            onChange={handleChange}
+            style={{ marginBottom: '1.25rem' }}
+          >
+            <option value="cash">نقدي</option>
+            <option value="installment">أقساط</option>
+          </FormField>
+          {values.total_amount !== '' && (
+            <div
+              style={{
+                padding: '1rem',
+                borderRadius: '12px',
+                background: 'var(--color-surface)',
+                border: '1px solid var(--color-border-light)',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+              }}
+            >
+              <span
+                style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', fontWeight: 500 }}
+              >
+                المتبقي:
+              </span>
+              <strong
+                style={{
+                  color: '#ef4444',
+                  fontSize: '1.1rem',
+                  fontWeight: 700,
+                }}
+              >
+                {(
+                  parseFloat(values.total_amount || 0) - parseFloat(values.paid_amount || 0)
+                ).toLocaleString('ar-IQ')}{' '}
+                IQD
+              </strong>
+            </div>
+          )}
+        </>
+      );
     return renderReview();
   };
 
   const renderPaymentStep = () => {
-    if (step === 1) return (
-      <>
-        <FormField label="نوع الدفعة" name="payment_type" type="select"
-          value={values.payment_type} onChange={handleChange} required
-          style={{ marginBottom: '1.25rem' }}
-        >
-          <option value="debt">دين</option>
-          <option value="paid">مدفوع</option>
-          <option value="credit">ائتمان</option>
-        </FormField>
-        <FormField label="المبلغ" name="amount" type="number" value={values.amount}
-          onChange={handleChange} error={errors.amount} required min="0" step="0.01" prefix="IQD"
-          style={{ marginBottom: '1.25rem' }}
-        />
-        <FormField label="الصنف المرتبط (اختياري)" name="item_id" type="select"
-          value={values.item_id} onChange={handleChange}
-          style={{ marginBottom: '1.25rem' }}
-        >
-          <option value="">-- لا يوجد --</option>
-          {items.map((i) => <option key={i.id} value={i.id}>{i.name}</option>)}
-        </FormField>
-      </>
-    );
-    if (step === 2) return (
-      <>
-        <FormField label="تاريخ المعاملة" name="transaction_date" type="datetime-local"
-          value={values.transaction_date} onChange={handleChange} required
-          style={{ marginBottom: '1.25rem' }}
-        />
-        <FormField label="تاريخ الاستحقاق" name="due_date" type="datetime-local"
-          value={values.due_date} onChange={handleChange}
-          style={{ marginBottom: '1.25rem' }}
-        />
-        <FormField label="الحالة" name="status" type="select"
-          value={values.status} onChange={handleChange}
-          style={{ marginBottom: '1.25rem' }}
-        >
-          <option value="pending">قيد الانتظار</option>
-          <option value="completed">مكتمل</option>
-          <option value="overdue">متأخر</option>
-        </FormField>
-        <FormField label="الوصف" name="description" type="textarea"
-          value={values.description} onChange={handleChange} rows={2}
-          style={{ marginBottom: '1.25rem' }}
-        />
-      </>
-    );
+    if (step === 1)
+      return (
+        <>
+          <FormField
+            label="نوع الدفعة"
+            name="payment_type"
+            type="select"
+            value={values.payment_type}
+            onChange={handleChange}
+            required
+            style={{ marginBottom: '1.25rem' }}
+          >
+            <option value="debt">دين</option>
+            <option value="paid">مدفوع</option>
+            <option value="credit">ائتمان</option>
+          </FormField>
+          <FormField
+            label="المبلغ"
+            name="amount"
+            type="number"
+            value={values.amount}
+            onChange={handleChange}
+            error={errors.amount}
+            required
+            min="0"
+            step="0.01"
+            prefix="IQD"
+            style={{ marginBottom: '1.25rem' }}
+          />
+          <FormField
+            label="الصنف المرتبط (اختياري)"
+            name="item_id"
+            type="select"
+            value={values.item_id}
+            onChange={handleChange}
+            style={{ marginBottom: '1.25rem' }}
+          >
+            <option value="">-- لا يوجد --</option>
+            {items.map((i) => (
+              <option key={i.id} value={i.id}>
+                {i.name}
+              </option>
+            ))}
+          </FormField>
+        </>
+      );
+    if (step === 2)
+      return (
+        <>
+          <FormField
+            label="تاريخ المعاملة"
+            name="transaction_date"
+            type="datetime-local"
+            value={values.transaction_date}
+            onChange={handleChange}
+            required
+            style={{ marginBottom: '1.25rem' }}
+          />
+          <FormField
+            label="تاريخ الاستحقاق"
+            name="due_date"
+            type="datetime-local"
+            value={values.due_date}
+            onChange={handleChange}
+            style={{ marginBottom: '1.25rem' }}
+          />
+          <FormField
+            label="الحالة"
+            name="status"
+            type="select"
+            value={values.status}
+            onChange={handleChange}
+            style={{ marginBottom: '1.25rem' }}
+          >
+            <option value="pending">قيد الانتظار</option>
+            <option value="completed">مكتمل</option>
+            <option value="overdue">متأخر</option>
+          </FormField>
+          <FormField
+            label="الوصف"
+            name="description"
+            type="textarea"
+            value={values.description}
+            onChange={handleChange}
+            rows={2}
+            style={{ marginBottom: '1.25rem' }}
+          />
+        </>
+      );
     return renderReview();
   };
 
@@ -466,53 +668,73 @@ const QuickEntryWizard = ({ isOpen, onClose, onOpen }) => {
       ([k, v]) => !skipKeys.has(k) && v !== '' && v !== null && v !== undefined
     );
     return (
-      <div style={{
-        padding: '1.5rem',
-        borderRadius: '16px',
-        background: 'var(--color-surface)',
-        border: '1px solid var(--color-border-light)',
-      }}>
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.75rem',
-          marginBottom: '1.25rem',
-          paddingBottom: '1rem',
-          borderBottom: '1px solid var(--color-border-light)',
-        }}>
-          <div style={{
-            width: '40px',
-            height: '40px',
-            borderRadius: '12px',
-            background: `${accentColor}20`,
-            color: accentColor,
+      <div
+        style={{
+          padding: '1.5rem',
+          borderRadius: '16px',
+          background: 'var(--color-surface)',
+          border: '1px solid var(--color-border-light)',
+        }}
+      >
+        <div
+          style={{
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center',
-          }}>
+            gap: '0.75rem',
+            marginBottom: '1.25rem',
+            paddingBottom: '1rem',
+            borderBottom: '1px solid var(--color-border-light)',
+          }}
+        >
+          <div
+            style={{
+              width: '40px',
+              height: '40px',
+              borderRadius: '12px',
+              background: `${accentColor}20`,
+              color: accentColor,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
             <FaCheck size={18} />
           </div>
           <div>
-            <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, color: 'var(--color-text)' }}>
+            <h3
+              style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, color: 'var(--color-text)' }}
+            >
               مراجعة البيانات
             </h3>
-            <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--color-text-muted)', marginTop: '0.25rem' }}>
+            <p
+              style={{
+                margin: 0,
+                fontSize: '0.8rem',
+                color: 'var(--color-text-muted)',
+                marginTop: '0.25rem',
+              }}
+            >
               راجع البيانات قبل الحفظ النهائي
             </p>
           </div>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
           {entries.map(([k, v]) => (
-            <div key={k} style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              padding: '0.75rem 1rem',
-              borderRadius: '10px',
-              background: 'var(--color-card-background)',
-              border: '1px solid var(--color-border-light)',
-            }}>
-              <span style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', fontWeight: 500 }}>
+            <div
+              key={k}
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '0.75rem 1rem',
+                borderRadius: '10px',
+                background: 'var(--color-card-background)',
+                border: '1px solid var(--color-border-light)',
+              }}
+            >
+              <span
+                style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', fontWeight: 500 }}
+              >
                 {REVIEW_LABELS[k] || k}
               </span>
               <span style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--color-text)' }}>
@@ -541,11 +763,11 @@ const QuickEntryWizard = ({ isOpen, onClose, onOpen }) => {
     <>
       {/* ── Wizard Overlay ── */}
       {isOpen && (
-        <div 
-          className="qe-overlay" 
-          onClick={close} 
-          role="dialog" 
-          aria-modal="true" 
+        <div
+          className="qe-overlay"
+          onClick={close}
+          role="dialog"
+          aria-modal="true"
           aria-label="معالج الإدخال السريع"
           style={{
             position: 'fixed',
@@ -559,8 +781,8 @@ const QuickEntryWizard = ({ isOpen, onClose, onOpen }) => {
             animation: 'fadeIn 0.2s ease',
           }}
         >
-          <div 
-            className="qe-wizard" 
+          <div
+            className="qe-wizard"
             onClick={(e) => e.stopPropagation()}
             style={{
               width: '90%',
@@ -576,55 +798,60 @@ const QuickEntryWizard = ({ isOpen, onClose, onOpen }) => {
             }}
           >
             {/* Header */}
-            <div 
-              className="qe-header" 
-              style={{ 
+            <div
+              className="qe-header"
+              style={{
                 padding: '1.75rem 2rem',
                 borderBottom: '1px solid var(--color-border-light)',
                 background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+              >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                  <div style={{
-                    width: '48px',
-                    height: '48px',
-                    borderRadius: '14px',
-                    background: 'rgba(255,255,255,0.2)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: '#fff',
-                    backdropFilter: 'blur(8px)',
-                  }}>
-                    {typeInfo
-                      ? <typeInfo.icon size={20} />
-                      : <FaBolt size={20} />
-                    }
+                  <div
+                    style={{
+                      width: '48px',
+                      height: '48px',
+                      borderRadius: '14px',
+                      background: 'rgba(255,255,255,0.2)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#fff',
+                      backdropFilter: 'blur(8px)',
+                    }}
+                  >
+                    {typeInfo ? <typeInfo.icon size={20} /> : <FaBolt size={20} />}
                   </div>
                   <div>
-                    <h2 style={{ 
-                      margin: 0, 
-                      color: '#fff', 
-                      fontSize: '1.5rem', 
-                      fontWeight: 800,
-                      letterSpacing: '-0.02em',
-                    }}>
+                    <h2
+                      style={{
+                        margin: 0,
+                        color: '#fff',
+                        fontSize: '1.5rem',
+                        fontWeight: 800,
+                        letterSpacing: '-0.02em',
+                      }}
+                    >
                       {!selectedType ? 'إدخال سريع' : typeInfo.label}
                     </h2>
-                    <p style={{ 
-                      margin: 0, 
-                      color: 'rgba(255,255,255,0.85)', 
-                      fontSize: '0.85rem', 
-                      marginTop: '0.25rem',
-                      fontWeight: 500,
-                    }}>
+                    <p
+                      style={{
+                        margin: 0,
+                        color: 'rgba(255,255,255,0.85)',
+                        fontSize: '0.85rem',
+                        marginTop: '0.25rem',
+                        fontWeight: 500,
+                      }}
+                    >
                       {!selectedType ? 'اختر نوع الإدخال' : `الخطوة ${step} من ${totalSteps}`}
                     </p>
                   </div>
                 </div>
-                <button 
-                  onClick={close} 
+                <button
+                  onClick={close}
                   aria-label="إغلاق"
                   style={{
                     width: '40px',
@@ -653,50 +880,72 @@ const QuickEntryWizard = ({ isOpen, onClose, onOpen }) => {
 
             {/* Progress bar */}
             {selectedType && (
-              <div style={{ padding: '1.5rem 2rem', borderBottom: '1px solid var(--color-border-light)' }}>
+              <div
+                style={{
+                  padding: '1.5rem 2rem',
+                  borderBottom: '1px solid var(--color-border-light)',
+                }}
+              >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   {TYPES[selectedType].steps.map((label, i) => (
                     <React.Fragment key={`step-${i}`}>
-                      <div style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        flex: 1,
-                      }}>
-                        <div style={{
-                          width: '40px',
-                          height: '40px',
-                          borderRadius: '12px',
-                          background: step > i + 1 ? accentColor : step === i + 1 ? accentColor : 'var(--color-surface)',
-                          border: step === i + 1 ? `2px solid ${accentColor}` : '2px solid var(--color-border-light)',
+                      <div
+                        style={{
                           display: 'flex',
+                          flexDirection: 'column',
                           alignItems: 'center',
-                          justifyContent: 'center',
-                          color: step > i + 1 || step === i + 1 ? '#fff' : 'var(--color-text-muted)',
-                          fontWeight: 700,
-                          fontSize: '0.9rem',
-                          marginBottom: '0.5rem',
-                          transition: 'all 0.3s ease',
-                        }}>
+                          flex: 1,
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: '40px',
+                            height: '40px',
+                            borderRadius: '12px',
+                            background:
+                              step > i + 1
+                                ? accentColor
+                                : step === i + 1
+                                  ? accentColor
+                                  : 'var(--color-surface)',
+                            border:
+                              step === i + 1
+                                ? `2px solid ${accentColor}`
+                                : '2px solid var(--color-border-light)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color:
+                              step > i + 1 || step === i + 1 ? '#fff' : 'var(--color-text-muted)',
+                            fontWeight: 700,
+                            fontSize: '0.9rem',
+                            marginBottom: '0.5rem',
+                            transition: 'all 0.3s ease',
+                          }}
+                        >
                           {step > i + 1 ? <FaCheck size={14} /> : <span>{i + 1}</span>}
                         </div>
-                        <span style={{
-                          fontSize: '0.75rem',
-                          color: step === i + 1 ? accentColor : 'var(--color-text-muted)',
-                          fontWeight: step === i + 1 ? 600 : 400,
-                        }}>
+                        <span
+                          style={{
+                            fontSize: '0.75rem',
+                            color: step === i + 1 ? accentColor : 'var(--color-text-muted)',
+                            fontWeight: step === i + 1 ? 600 : 400,
+                          }}
+                        >
                           {label}
                         </span>
                       </div>
                       {i < TYPES[selectedType].steps.length - 1 && (
-                        <div style={{
-                          flex: 1,
-                          height: '2px',
-                          background: step > i + 1 ? accentColor : 'var(--color-border-light)',
-                          margin: '0 0.5rem',
-                          borderRadius: '1px',
-                          transition: 'all 0.3s ease',
-                        }} />
+                        <div
+                          style={{
+                            flex: 1,
+                            height: '2px',
+                            background: step > i + 1 ? accentColor : 'var(--color-border-light)',
+                            margin: '0 0.5rem',
+                            borderRadius: '1px',
+                            transition: 'all 0.3s ease',
+                          }}
+                        />
                       )}
                     </React.Fragment>
                   ))}
@@ -705,13 +954,21 @@ const QuickEntryWizard = ({ isOpen, onClose, onOpen }) => {
             )}
 
             {/* Body */}
-            <div style={{
-              flex: 1,
-              overflow: 'auto',
-              padding: '2rem',
-            }}>
+            <div
+              style={{
+                flex: 1,
+                overflow: 'auto',
+                padding: '2rem',
+              }}
+            >
               {!selectedType ? (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                    gap: '1rem',
+                  }}
+                >
                   {Object.values(TYPES).map(({ key, label, icon: Icon, color }) => (
                     <button
                       key={key}
@@ -741,49 +998,56 @@ const QuickEntryWizard = ({ isOpen, onClose, onOpen }) => {
                         e.currentTarget.style.boxShadow = 'none';
                       }}
                     >
-                      <div style={{
-                        width: '56px',
-                        height: '56px',
-                        borderRadius: '16px',
-                        background: `${color}20`,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: color,
-                      }}>
+                      <div
+                        style={{
+                          width: '56px',
+                          height: '56px',
+                          borderRadius: '16px',
+                          background: `${color}20`,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: color,
+                        }}
+                      >
                         <Icon size={24} />
                       </div>
-                      <span style={{
-                        fontSize: '1rem',
-                        fontWeight: 700,
-                        color: 'var(--color-text)',
-                      }}>
+                      <span
+                        style={{
+                          fontSize: '1rem',
+                          fontWeight: 700,
+                          color: 'var(--color-text)',
+                        }}
+                      >
                         {label}
                       </span>
-                      <FaChevronLeft size={12} style={{ color: 'var(--color-text-muted)', marginTop: 'auto' }} />
+                      <FaChevronLeft
+                        size={12}
+                        style={{ color: 'var(--color-text-muted)', marginTop: 'auto' }}
+                      />
                     </button>
                   ))}
                 </div>
               ) : (
-                <div className={`qe-body qe-anim-${animate}`}>
-                  {renderStepContent()}
-                </div>
+                <div className={`qe-body qe-anim-${animate}`}>{renderStepContent()}</div>
               )}
             </div>
 
             {/* Footer */}
             {selectedType && (
-              <div style={{
-                padding: '1.5rem 2rem',
-                borderTop: '1px solid var(--color-border-light)',
-                display: 'flex',
-                justifyContent: 'space-between',
-                gap: '1rem',
-              }}>
-                <Button 
-                  type="button" 
-                  onClick={back} 
-                  className="btn-secondary" 
+              <div
+                style={{
+                  padding: '1.5rem 2rem',
+                  borderTop: '1px solid var(--color-border-light)',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  gap: '1rem',
+                }}
+              >
+                <Button
+                  type="button"
+                  onClick={back}
+                  className="btn-secondary"
                   disabled={isSubmitting}
                   style={{
                     padding: '0.875rem 1.5rem',
@@ -802,10 +1066,10 @@ const QuickEntryWizard = ({ isOpen, onClose, onOpen }) => {
                   {step === 1 ? 'تغيير النوع' : 'رجوع'}
                 </Button>
                 {isLastStep ? (
-                  <Button 
-                    type="button" 
-                    onClick={submit} 
-                    className="btn-success" 
+                  <Button
+                    type="button"
+                    onClick={submit}
+                    className="btn-success"
                     loading={isSubmitting}
                     disabled={isSubmitting}
                     style={{
@@ -827,9 +1091,9 @@ const QuickEntryWizard = ({ isOpen, onClose, onOpen }) => {
                     {isSubmitting ? 'جاري الحفظ...' : 'حفظ البيانات'}
                   </Button>
                 ) : (
-                  <Button 
-                    type="button" 
-                    onClick={next} 
+                  <Button
+                    type="button"
+                    onClick={next}
                     className="btn-primary"
                     style={{
                       padding: '0.875rem 2rem',

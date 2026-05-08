@@ -1,81 +1,99 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FaWarehouse, FaChartLine, FaExchangeAlt } from 'react-icons/fa';
-import Card from '../components/common/Card';
+import { Card, CardContent } from '../components/ui/card';
+import { cn } from '../lib/utils';
 import StockTracking from './StockTracking';
 import StockLevels from './StockLevels';
 import StockMovements from './StockMovements';
+
+const TABS = [
+  { id: 'tracking', labelKey: 'stock.tracking', labelFallback: 'Stock Tracking', icon: FaWarehouse },
+  { id: 'levels', labelKey: 'stock.levels', labelFallback: 'Stock Levels', icon: FaChartLine },
+  { id: 'movements', labelKey: 'stock.movements', labelFallback: 'Stock Movements', icon: FaExchangeAlt },
+];
 
 const Stock = () => {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('tracking');
 
-  const tabs = [
-    { id: 'tracking', label: 'تتبع المخزون', icon: FaWarehouse },
-    { id: 'levels', label: 'مستويات المخزون', icon: FaChartLine },
-    { id: 'movements', label: 'حركات المخزون', icon: FaExchangeAlt },
-  ];
-
   return (
-    <div className="page">
-      <div style={{
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-        color: '#fff',
-        padding: '2rem',
-        borderRadius: '20px',
-        marginBottom: '2rem',
-        boxShadow: '0 20px 60px rgba(102,126,234,0.3)',
-      }}>
-        <h1 style={{ margin: 0, fontSize: '2rem', fontWeight: 800, marginBottom: '0.5rem' }}>
-          المخزون
-        </h1>
-        <p style={{ margin: 0, fontSize: '1rem', opacity: 0.9 }}>
-          إدارة المخزون وتتبع الحركات
-        </p>
+    <div className="space-y-4 sm:space-y-6">
+      {/* Page header with gradient */}
+      <div className="relative overflow-hidden rounded-2xl p-4 sm:p-6 md:p-8 mb-4 sm:mb-6 shadow-lg" style={{ background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)' }}>
+        {/* Decorative circles */}
+        <div className="absolute top-0 right-0 w-48 h-48 rounded-full bg-white/10 -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-32 h-32 rounded-full bg-white/8 translate-y-1/2 -translate-x-1/2 pointer-events-none" />
+
+        <div className="relative flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-6">
+          <div className="flex items-center gap-3 sm:gap-5 w-full sm:w-auto">
+            <div className="flex h-12 w-12 sm:h-14 sm:w-14 md:h-16 md:w-16 shrink-0 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-sm text-white shadow-lg text-2xl">
+              <FaWarehouse />
+            </div>
+            <div className="space-y-1">
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white drop-shadow-sm">
+                {t('nav.stock')}
+              </h1>
+              <p className="text-sm sm:text-base text-white/90 font-medium">
+                {t('stock.description', { defaultValue: 'Manage inventory levels and track movements' })}
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <Card style={{ marginBottom: '2rem' }}>
-        <div style={{ display: 'flex', gap: '0.5rem', borderBottom: '1px solid var(--color-border-light)', paddingBottom: '1rem' }}>
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              style={{
-                padding: '0.75rem 1.5rem',
-                borderRadius: '12px',
-                border: 'none',
-                background: activeTab === tab.id ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : 'var(--color-surface)',
-                color: activeTab === tab.id ? '#fff' : 'var(--color-text)',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                fontWeight: 600,
-                fontSize: '0.95rem',
-                transition: 'all 0.2s ease',
-              }}
-              onMouseEnter={(e) => {
-                if (activeTab !== tab.id) {
-                  e.currentTarget.style.background = 'var(--color-border-light)';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (activeTab !== tab.id) {
-                  e.currentTarget.style.background = 'var(--color-surface)';
-                }
-              }}
-            >
-              <tab.icon size={16} />
-              {tab.label}
-            </button>
-          ))}
+      {/* Tabbed card */}
+      <Card>
+        {/* Tab bar */}
+        <div
+          className="flex gap-1 border-b border-border px-3 sm:px-4 pt-3 sm:pt-4"
+          role="tablist"
+          aria-label={t('nav.stock')}
+        >
+          {TABS.map((tab) => {
+            const active = activeTab === tab.id;
+            const label = t(tab.labelKey, { defaultValue: tab.labelFallback });
+            return (
+              <button
+                key={tab.id}
+                role="tab"
+                aria-selected={active}
+                aria-controls={`tabpanel-${tab.id}`}
+                id={`tab-${tab.id}`}
+                onClick={() => setActiveTab(tab.id)}
+                className={cn(
+                  'flex items-center gap-1.5 sm:gap-2 px-2 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-medium rounded-t-md border-b-2 -mb-px outline-none flex-1 sm:flex-none',
+                  'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
+                  active
+                    ? 'border-primary text-primary bg-primary/5'
+                    : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                )}
+              >
+                <tab.icon className="text-sm" aria-hidden="true" />
+                <span className="hidden sm:inline">{label}</span>
+              </button>
+            );
+          })}
         </div>
 
-        <div style={{ paddingTop: '1.5rem' }}>
-          {activeTab === 'tracking' && <StockTracking />}
-          {activeTab === 'levels' && <StockLevels />}
-          {activeTab === 'movements' && <StockMovements />}
-        </div>
+        {/* Tab panels */}
+        <CardContent className="pt-4 sm:pt-6">
+          {TABS.map((tab) => (
+            <div
+              key={tab.id}
+              role="tabpanel"
+              id={`tabpanel-${tab.id}`}
+              aria-labelledby={`tab-${tab.id}`}
+              hidden={activeTab !== tab.id}
+            >
+              {activeTab === tab.id && (
+                tab.id === 'tracking' ? <StockTracking /> :
+                tab.id === 'levels' ? <StockLevels /> :
+                <StockMovements />
+              )}
+            </div>
+          ))}
+        </CardContent>
       </Card>
     </div>
   );

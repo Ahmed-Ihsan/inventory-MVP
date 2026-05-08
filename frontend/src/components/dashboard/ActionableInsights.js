@@ -1,29 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import Button from '../common/Button';
-import {
-  FaBell, FaExclamationTriangle, FaStar,
-  FaMedkit, FaShoppingCart,
-} from 'react-icons/fa';
+import { FaBell, FaExclamationTriangle, FaStar, FaMedkit, FaShoppingCart } from 'react-icons/fa';
 import apiService from '../../services/apiService';
+import { Card as ShadcnCard, CardContent } from '../ui/card';
+import { cn } from '../../lib/utils';
 
 const RANK_COLORS = ['#f39c12', '#a0aec0', '#cd7f32'];
 
-const rowStyle = {
-  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-  padding: '0.875rem 1rem',
-  background: 'var(--color-surface)',
-  borderRadius: 'var(--border-radius-lg)',
-  border: '1px solid var(--color-border-light)',
-};
-
 const EmptyRow = ({ text, success }) => (
-  <div style={{
-    textAlign: 'center', padding: '2rem 0',
-    color: success ? 'var(--color-success)' : 'var(--color-text-muted)',
-    fontSize: '0.875rem', fontWeight: 600,
-  }}>
-    {text}
+  <div className="text-center py-8 text-sm font-semibold">
+    <span className={cn(success ? 'text-emerald-600' : 'text-muted-foreground')}>
+      {text}
+    </span>
   </div>
 );
 
@@ -44,13 +33,17 @@ const ActionableInsights = () => {
         ]);
 
         const itemMap = {};
-        stockLevels.forEach(i => { itemMap[i.id] = i.name; });
+        stockLevels.forEach((i) => {
+          itemMap[i.id] = i.name;
+        });
 
         // Active alerts with stock data
         setAlerts(
-          alertsData.filter(a => a.is_active).slice(0, 5)
-            .map(a => {
-              const item = stockLevels.find(i => i.id === a.item_id);
+          alertsData
+            .filter((a) => a.is_active)
+            .slice(0, 5)
+            .map((a) => {
+              const item = stockLevels.find((i) => i.id === a.item_id);
               return {
                 ...a,
                 itemName: itemMap[a.item_id] || `#${a.item_id}`,
@@ -63,14 +56,14 @@ const ActionableInsights = () => {
         // Critical low stock — items at or below min level, sorted by lowest stock
         setCriticalItems(
           stockLevels
-            .filter(i => i.current_stock <= i.min_stock_level)
+            .filter((i) => i.current_stock <= i.min_stock_level)
             .sort((a, b) => a.current_stock - b.current_stock)
             .slice(0, 5)
         );
 
         // Top moving items — ranked by total movement count
         const moveCounts = {};
-        movementsData.forEach(m => {
+        movementsData.forEach((m) => {
           moveCounts[m.item_id] = (moveCounts[m.item_id] || 0) + 1;
         });
         const topNames = Object.entries(moveCounts)
@@ -78,7 +71,7 @@ const ActionableInsights = () => {
           .slice(0, 5)
           .map(([id]) => itemMap[Number(id)])
           .filter(Boolean);
-        setTopItems(topNames.length > 0 ? topNames : stockLevels.slice(0, 5).map(i => i.name));
+        setTopItems(topNames.length > 0 ? topNames : stockLevels.slice(0, 5).map((i) => i.name));
       } catch {
         // silent
       } finally {
@@ -89,127 +82,141 @@ const ActionableInsights = () => {
   }, []);
 
   return (
-    <div className="dashboard-insights-row">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
       {/* Active Alerts */}
-      <div className="dashboard-card">
-        <div className="card-section-header">
-          <div className="card-section-icon" style={{ background: 'var(--color-warning-light)', color: 'var(--color-warning)' }}>
-            <FaBell />
+      <ShadcnCard className="border-border/60 shadow-lg shadow-black/5">
+        <CardContent className="p-3 sm:p-4">
+          <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+            <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-lg bg-amber-500/10 text-amber-600">
+              <FaBell style={{ fontSize: '14px' }} className="sm:text-[16px]" />
+            </div>
+            <h3 className="text-xs sm:text-sm font-bold text-foreground">{t('dashboard.insights.activeAlerts')}</h3>
           </div>
-          <h3 className="card-section-title">{t('dashboard.insights.activeAlerts')}</h3>
-        </div>
-        {loading ? <EmptyRow text="..." /> : alerts.length === 0 ? (
-          <EmptyRow text="✓ لا توجد تنبيهات نشطة" success />
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
-            {alerts.map((alert) => (
-              <div key={alert.id} style={rowStyle}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                  <div style={{
-                    width: 38, height: 38, borderRadius: '10px',
-                    background: alert.alert_type === 'out_of_stock' ? 'var(--color-danger-light)' : 'var(--color-warning-light)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    color: alert.alert_type === 'out_of_stock' ? 'var(--color-danger)' : 'var(--color-warning)',
-                    flexShrink: 0,
-                  }}>
-                    <FaBell size={15} />
-                  </div>
-                  <div>
-                    <div style={{ fontWeight: 600, fontSize: '0.875rem', color: 'var(--color-text)' }}>
-                      {alert.itemName}
+          {loading ? (
+            <EmptyRow text="..." />
+          ) : alerts.length === 0 ? (
+            <EmptyRow text="✓ لا توجد تنبيهات نشطة" success />
+          ) : (
+            <div className="flex flex-col gap-2 sm:gap-2.5">
+              {alerts.map((alert) => (
+                <div key={alert.id} className="flex justify-between items-center p-2.5 sm:p-3.5 bg-muted rounded-lg border border-border">
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <div className={cn(
+                      'flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-lg',
+                      alert.alert_type === 'out_of_stock' ? 'bg-red-500/10 text-red-600' : 'bg-amber-500/10 text-amber-600'
+                    )}>
+                      <FaBell style={{ fontSize: '13px' }} className="sm:text-[15px]" />
                     </div>
-                    <div style={{ fontSize: '0.8rem', color: alert.alert_type === 'out_of_stock' ? 'var(--color-danger)' : 'var(--color-warning)', fontWeight: 500 }}>
-                      {alert.currentStock} / {alert.minStock} {t('dashboard.insights.unitsRemaining')}
+                    <div className="flex-1 min-w-0">
+                      <div className="font-semibold text-xs sm:text-sm text-foreground truncate">
+                        {alert.itemName}
+                      </div>
+                      <div className={cn(
+                        'text-[10px] sm:text-xs font-medium',
+                        alert.alert_type === 'out_of_stock' ? 'text-red-600' : 'text-amber-600'
+                      )}>
+                        {alert.currentStock} / {alert.minStock}{' '}
+                        {t('dashboard.insights.unitsRemaining')}
+                      </div>
                     </div>
                   </div>
+                  <span className={cn(
+                    'px-1.5 sm:px-2 py-1 rounded-full text-[10px] sm:text-xs font-semibold',
+                    alert.alert_type === 'out_of_stock' ? 'bg-red-500/10 text-red-600' : 'bg-amber-500/10 text-amber-600'
+                  )}>
+                    {alert.alert_type === 'out_of_stock' ? 'نفاد المخزون' : 'مخزون منخفض'}
+                  </span>
                 </div>
-                <span className={`badge badge-${alert.alert_type === 'out_of_stock' ? 'danger' : 'warning'}`}>
-                  {alert.alert_type === 'out_of_stock' ? 'نفاد المخزون' : 'مخزون منخفض'}
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </ShadcnCard>
 
       {/* Critical low stock */}
-      <div className="dashboard-card">
-        <div className="card-section-header">
-          <div className="card-section-icon" style={{ background: 'var(--color-danger-light)', color: 'var(--color-danger)' }}>
-            <FaExclamationTriangle />
+      <ShadcnCard className="border-border/60 shadow-lg shadow-black/5">
+        <CardContent className="p-3 sm:p-4">
+          <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+            <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-lg bg-red-500/10 text-red-600">
+              <FaExclamationTriangle style={{ fontSize: '14px' }} className="sm:text-[16px]" />
+            </div>
+            <h3 className="text-xs sm:text-sm font-bold text-foreground">{t('dashboard.insights.criticalLowStock')}</h3>
           </div>
-          <h3 className="card-section-title">{t('dashboard.insights.criticalLowStock')}</h3>
-        </div>
-        {loading ? <EmptyRow text="..." /> : criticalItems.length === 0 ? (
-          <EmptyRow text="✓ جميع المنتجات ضمن المستوى الطبيعي" success />
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
-            {criticalItems.map((item) => (
-              <div key={item.id} style={rowStyle}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                  <div style={{
-                    width: 38, height: 38, borderRadius: '10px',
-                    background: 'var(--color-danger-light)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    color: 'var(--color-danger)', flexShrink: 0,
-                  }}>
-                    <FaMedkit size={15} />
-                  </div>
-                  <div>
-                    <div style={{ fontWeight: 600, fontSize: '0.875rem', color: 'var(--color-text)' }}>
-                      {item.name}
+          {loading ? (
+            <EmptyRow text="..." />
+          ) : criticalItems.length === 0 ? (
+            <EmptyRow text="✓ جميع المنتجات ضمن المستوى الطبيعي" success />
+          ) : (
+            <div className="flex flex-col gap-2 sm:gap-2.5">
+              {criticalItems.map((item) => (
+                <div key={item.id} className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-3 p-2.5 sm:p-3.5 bg-muted rounded-lg border border-border">
+                  <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
+                    <div className="flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-lg bg-red-500/10 text-red-600">
+                      <FaMedkit style={{ fontSize: '13px' }} className="sm:text-[15px]" />
                     </div>
-                    <div style={{ fontSize: '0.8rem', color: 'var(--color-danger)', fontWeight: 500 }}>
-                      {item.current_stock} {t('dashboard.insights.unitsRemaining')}
+                    <div className="flex-1 min-w-0">
+                      <div className="font-semibold text-xs sm:text-sm text-foreground truncate">
+                        {item.name}
+                      </div>
+                      <div className="text-[10px] sm:text-xs font-medium text-red-600">
+                        {item.current_stock} {t('dashboard.insights.unitsRemaining')}
+                      </div>
                     </div>
                   </div>
+                  <Button size="sm" className="text-[10px] sm:text-xs w-full sm:w-auto">
+                    <FaShoppingCart style={{ fontSize: '10px' }} className="sm:text-[11px] mr-1" />
+                    {t('dashboard.insights.quickReorder')}
+                  </Button>
                 </div>
-                <Button className="btn-sm btn-warning">
-                  <FaShoppingCart size={11} />
-                  {t('dashboard.insights.quickReorder')}
-                </Button>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </ShadcnCard>
 
       {/* Top moving items */}
-      <div className="dashboard-card">
-        <div className="card-section-header">
-          <div className="card-section-icon" style={{ background: 'var(--color-success-light)', color: 'var(--color-success)' }}>
-            <FaStar style={{ color: 'var(--color-warning)' }} />
+      <ShadcnCard className="border-border/60 shadow-lg shadow-black/5">
+        <CardContent className="p-3 sm:p-4">
+          <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+            <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600">
+              <FaStar style={{ fontSize: '14px' }} className="text-amber-500 sm:text-[16px]" />
+            </div>
+            <h3 className="text-xs sm:text-sm font-bold text-foreground">{t('dashboard.insights.topMovingItems')}</h3>
           </div>
-          <h3 className="card-section-title">{t('dashboard.insights.topMovingItems')}</h3>
-        </div>
-        {loading ? <EmptyRow text="..." /> : topItems.length === 0 ? (
-          <EmptyRow text="لا توجد بيانات حركة" />
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            {topItems.map((item, i) => (
-              <div key={`top-${item}`} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', background: 'var(--color-surface)', borderRadius: 'var(--border-radius-lg)', border: '1px solid var(--color-border-light)' }}>
-                <div style={{
-                  width: 30, height: 30, borderRadius: '8px',
-                  background: RANK_COLORS[i] ?? 'var(--color-border)',
-                  color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: '0.8rem', fontWeight: 700, flexShrink: 0,
-                }}>
-                  {i + 1}
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontWeight: 600, fontSize: '0.875rem', color: 'var(--color-text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    {item}
+          {loading ? (
+            <EmptyRow text="..." />
+          ) : topItems.length === 0 ? (
+            <EmptyRow text="لا توجد بيانات حركة" />
+          ) : (
+            <div className="flex flex-col gap-1.5 sm:gap-2">
+              {topItems.map((item, i) => (
+                <div
+                  key={`top-${item}`}
+                  className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-muted rounded-lg border border-border"
+                >
+                  <div
+                    className="flex h-6 w-6 sm:h-7 sm:w-7 shrink-0 items-center justify-center rounded-lg text-[10px] sm:text-xs font-bold text-white"
+                    style={{ background: RANK_COLORS[i] ?? 'hsl(var(--border))' }}
+                  >
+                    {i + 1}
                   </div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
-                    أعلى أداء في الفترة الحالية
+                  <div className="flex-1 min-w-0">
+                    <div className="font-semibold text-xs sm:text-sm text-foreground truncate">
+                      {item}
+                    </div>
+                    <div className="text-[10px] sm:text-xs text-muted-foreground">
+                      أعلى أداء في الفترة الحالية
+                    </div>
                   </div>
+                  {i < 3 && (
+                    <FaStar className="text-amber-500 text-xs sm:text-sm shrink-0" />
+                  )}
                 </div>
-                {i < 3 && <FaStar style={{ color: 'var(--color-warning)', fontSize: '0.85rem', flexShrink: 0 }} />}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </ShadcnCard>
     </div>
   );
 };

@@ -1,14 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../context/ThemeContext';
-import { FaSun, FaMoon, FaBars, FaTimes, FaSearch, FaBolt, FaPlus } from 'react-icons/fa';
+import { FaSun, FaMoon, FaSearch, FaBolt } from 'react-icons/fa';
+import { FiCommand } from 'react-icons/fi';
 import GlobalSearch from '../common/GlobalSearch';
+import { Button } from '../ui/button';
+import { cn } from '../../lib/utils';
 
 const Header = ({ onOpenQuickEntry }) => {
   const { t, i18n } = useTranslation();
   const { isDark, toggleTheme } = useTheme();
-  const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -17,154 +20,124 @@ const Header = ({ onOpenQuickEntry }) => {
         setSearchOpen(true);
       }
     };
+    const handleScroll = () => setScrolled(window.scrollY > 4);
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('scroll', handleScroll);
+    };
   }, []);
 
-  const changeLanguage = (lng) => {
-    i18n.changeLanguage(lng);
-  };
-
-  const iconBtnStyle = {
-    background: 'rgba(255, 255, 255, 0.08)',
-    border: '1px solid rgba(255, 255, 255, 0.12)',
-    color: 'rgba(255, 255, 255, 0.9)',
-    fontSize: '1rem',
-    cursor: 'pointer',
-    padding: '0.5rem',
-    borderRadius: '10px',
-    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-    width: '38px',
-    height: '38px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backdropFilter: 'blur(4px)',
-  };
+  const isRtl = i18n.language === 'ar';
 
   return (
-    <header className="header">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <div style={{
-            width: '36px',
-            height: '36px',
-            borderRadius: '10px',
-            background: 'rgba(255, 255, 255, 0.15)',
-            border: '1px solid rgba(255, 255, 255, 0.2)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontWeight: '800',
-            fontSize: '1.125rem',
-            letterSpacing: '-0.05em',
-            backdropFilter: 'blur(4px)',
-          }}>
+    <header
+      className={cn(
+        'sticky top-0 z-40 flex h-14 items-center',
+        'border-b border-border/60',
+        'bg-background/90 backdrop-blur-xl supports-[backdrop-filter]:bg-background/75',
+        'px-5',
+        'transition-shadow duration-200',
+        scrolled && 'shadow-[0_1px_12px_rgba(0,0,0,0.06)]'
+      )}
+    >
+      <div className="flex w-full items-center justify-between gap-4">
+
+        {/* ── Brand mark ── */}
+        <div className="flex items-center gap-2.5 shrink-0">
+          <div
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-[13px] font-bold tracking-tight text-white"
+            style={{ background: 'linear-gradient(135deg, #6366f1, #a78bfa)' }}
+          >
             IM
           </div>
-          <h1 style={{ margin: 0 }}>{t('nav.dashboard')}</h1>
+          <span className="hidden sm:block text-sm font-semibold tracking-tight text-foreground">
+            Inventory
+          </span>
+          <span className="hidden lg:flex items-center gap-1 text-[11px] font-medium text-muted-foreground/60 mt-px">
+            <span className="w-1 h-1 rounded-full bg-emerald-400 inline-block" />
+            {isRtl ? 'متصل' : 'Live'}
+          </span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <button
-            onClick={onOpenQuickEntry}
-            style={{
-              ...iconBtnStyle,
-              width: 'auto',
-              padding: '0.5rem 1rem',
-              minWidth: '120px',
-              justifyContent: 'start',
-              gap: '0.5rem',
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              border: 'none',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'scale(1.02)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'scale(1)';
-            }}
-            title="إدخال سريع (Ctrl+Shift+Q)"
-          >
-            <FaBolt size={14} />
-            <FaPlus size={12} />
-            <span style={{ fontSize: '0.875rem' }}>إدخال سريع</span>
-          </button>
 
+        {/* ── Center: Search bar ── */}
+        <button
+          onClick={() => setSearchOpen(true)}
+          className={cn(
+            'hidden sm:flex items-center gap-2.5 px-3 h-9 rounded-lg text-sm',
+            'bg-muted/50 hover:bg-muted text-muted-foreground',
+            'border border-border/60 hover:border-border',
+            'transition-all duration-150 cursor-pointer',
+            'min-w-[200px] max-w-[320px] flex-1'
+          )}
+          aria-label={t('common.search')}
+          id="global-search-trigger"
+        >
+          <FaSearch size={12} className="shrink-0 opacity-60" />
+          <span className="flex-1 text-left text-xs opacity-70">
+            {isRtl ? 'بحث...' : 'Search anything...'}
+          </span>
+          <kbd className="hidden md:inline-flex items-center gap-0.5 h-5 rounded border border-border bg-background px-1.5 font-mono text-[9px] text-muted-foreground/60">
+            <FiCommand size={9} />K
+          </kbd>
+        </button>
+
+        {/* ── Actions ── */}
+        <div className="flex items-center gap-1">
+          {/* Mobile: icon-only search trigger */}
           <button
             onClick={() => setSearchOpen(true)}
-            style={{
-              ...iconBtnStyle,
-              width: 'auto',
-              padding: '0.5rem 1rem',
-              minWidth: '120px',
-              justifyContent: 'start',
-              gap: '0.5rem',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.18)';
-              e.currentTarget.style.transform = 'scale(1.02)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)';
-              e.currentTarget.style.transform = 'scale(1)';
-            }}
-            title="بحث (Ctrl+K)"
+            className="sm:hidden inline-flex items-center justify-center w-9 h-9 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-all duration-150"
+            aria-label={t('common.search')}
+            id="mobile-search-trigger"
           >
             <FaSearch size={14} />
-            <span style={{ fontSize: '0.875rem' }}>بحث...</span>
           </button>
 
-          <button
-            onClick={() => changeLanguage(i18n.language === 'ar' ? 'en' : 'ar')}
-            style={{
-              ...iconBtnStyle,
-              width: 'auto',
-              padding: '0.5rem 1rem',
-              minWidth: '80px',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.18)';
-              e.currentTarget.style.transform = 'scale(1.05)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)';
-              e.currentTarget.style.transform = 'scale(1)';
-            }}
-            title={i18n.language === 'ar' ? 'Switch to English' : 'التبديل إلى العربية'}
+          {/* Quick entry — icon-only on mobile, text on md+ */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onOpenQuickEntry}
+            className="flex gap-1.5 h-8 text-xs font-semibold text-muted-foreground hover:text-foreground"
+            id="quick-entry-btn"
+            aria-label={t('quickEntry.title', { defaultValue: 'Quick entry' })}
           >
-            {i18n.language === 'ar' ? 'English' : 'العربية'}
-          </button>
+            <FaBolt size={11} className="text-amber-400" />
+            <span className="hidden md:inline">
+              {isRtl ? 'إدخال سريع' : 'Quick Entry'}
+            </span>
+          </Button>
 
-          <button
+          <div className="h-4 w-px bg-border/60 hidden sm:block mx-0.5" />
+
+          {/* Language toggle */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => i18n.changeLanguage(isRtl ? 'en' : 'ar')}
+            className="h-8 w-8 text-[11px] font-bold text-muted-foreground hover:text-foreground"
+            aria-label={isRtl ? 'Switch to English' : 'التبديل إلى العربية'}
+            id="lang-toggle-btn"
+          >
+            {isRtl ? 'EN' : 'ع'}
+          </Button>
+
+          {/* Theme toggle */}
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={toggleTheme}
-            style={iconBtnStyle}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.18)';
-              e.currentTarget.style.transform = 'scale(1.05)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)';
-              e.currentTarget.style.transform = 'scale(1)';
-            }}
-            title={isDark ? 'Light Mode' : 'Dark Mode'}
+            className="h-8 w-8 text-muted-foreground hover:text-foreground"
+            aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+            id="theme-toggle-btn"
           >
-            {isDark ? <FaSun /> : <FaMoon />}
-          </button>
-
-          <button
-            onClick={() => setMenuOpen(!menuOpen)}
-            style={{
-              ...iconBtnStyle,
-              display: 'none',
-            }}
-            className="mobile-menu-btn"
-          >
-            {menuOpen ? <FaTimes /> : <FaBars />}
-          </button>
-
-          <nav className={menuOpen ? 'nav-open' : ''}>
-            <ul style={{ display: 'flex', listStyle: 'none', margin: 0, padding: 0, gap: '1rem' }}></ul>
-          </nav>
+            {isDark
+              ? <FaSun size={13} className="text-amber-400" />
+              : <FaMoon size={13} />
+            }
+          </Button>
         </div>
       </div>
 
@@ -174,3 +147,4 @@ const Header = ({ onOpenQuickEntry }) => {
 };
 
 export default Header;
+

@@ -30,7 +30,9 @@ const ConfirmDialog = ({
     if (!isOpen) return;
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
-    const handleKey = (e) => { if (e.key === 'Escape') onCancel(); };
+    const handleKey = (e) => {
+      if (e.key === 'Escape') onCancel();
+    };
     document.addEventListener('keydown', handleKey);
     return () => {
       document.body.style.overflow = prev;
@@ -55,30 +57,21 @@ const ConfirmDialog = ({
       aria-labelledby="confirm-title"
       aria-describedby="confirm-message"
     >
-      <div
-        className="confirm-dialog"
-        onClick={(e) => e.stopPropagation()}
-      >
+      <div className="confirm-dialog" onClick={(e) => e.stopPropagation()}>
         <div className={`confirm-icon-wrap confirm-icon-${variant}`}>
           {icons[variant] || icons.danger}
         </div>
-        <h3 id="confirm-title" className="confirm-title">{title}</h3>
-        <p id="confirm-message" className="confirm-message">{message}</p>
+        <h3 id="confirm-title" className="confirm-title">
+          {title}
+        </h3>
+        <p id="confirm-message" className="confirm-message">
+          {message}
+        </p>
         <div className="confirm-actions">
-          <Button
-            type="button"
-            onClick={onCancel}
-            className="btn-secondary"
-            disabled={loading}
-          >
+          <Button type="button" onClick={onCancel} className="btn-secondary" disabled={loading}>
             {cancelLabel}
           </Button>
-          <Button
-            type="button"
-            onClick={onConfirm}
-            className={`btn-${variant}`}
-            loading={loading}
-          >
+          <Button type="button" onClick={onConfirm} className={`btn-${variant}`} loading={loading}>
             {confirmLabel}
           </Button>
         </div>

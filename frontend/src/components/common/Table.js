@@ -9,13 +9,21 @@ const Table = memo(({ columns, data, className = '', emptyMessage = 'لا توج
           <thead>
             <tr>
               {columns.map((col, index) => (
-                <th key={`col-header-${col.accessor || index}`} style={{ textAlign: 'right', fontWeight: 'bold' }} scope="col">{col.header}</th>
+                <th
+                  key={`col-header-${col.accessor || index}`}
+                  style={{ textAlign: 'right', fontWeight: 'bold' }}
+                  scope="col"
+                >
+                  {col.header}
+                </th>
               ))}
             </tr>
           </thead>
         </table>
         <div className="table-empty-state" role="status" aria-live="polite">
-          <div className="table-empty-icon" aria-hidden="true"><FaInbox /></div>
+          <div className="table-empty-icon" aria-hidden="true">
+            <FaInbox />
+          </div>
           <p className="table-empty-msg">{emptyMessage}</p>
         </div>
       </div>
@@ -23,12 +31,23 @@ const Table = memo(({ columns, data, className = '', emptyMessage = 'لا توج
   }
 
   return (
-    <div className="table-container" role="region" aria-label="جدول البيانات">
-      <table className={`table ${className}`}>
+    <div
+      className="table-container"
+      role="region"
+      aria-label="جدول البيانات"
+      style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}
+    >
+      <table className={`table ${className}`} style={{ minWidth: '480px' }}>
         <thead>
           <tr>
             {columns.map((col, index) => (
-              <th key={`col-header-${col.accessor || index}`} style={{ textAlign: 'right', fontWeight: 'bold' }} scope="col">{col.header}</th>
+              <th
+                key={`col-header-${col.accessor || index}`}
+                style={{ textAlign: 'right', fontWeight: 'bold' }}
+                scope="col"
+              >
+                {col.header}
+              </th>
             ))}
           </tr>
         </thead>
@@ -36,7 +55,10 @@ const Table = memo(({ columns, data, className = '', emptyMessage = 'لا توج
           {data.map((row, rowIndex) => (
             <tr key={`row-${row.id || rowIndex}`}>
               {columns.map((col, colIndex) => (
-                <td key={`cell-${rowIndex}-${col.accessor || colIndex}`} style={{ textAlign: col.accessor === 'actions' ? 'center' : 'right' }}>
+                <td
+                  key={`cell-${rowIndex}-${col.accessor || colIndex}`}
+                  style={{ textAlign: col.accessor === 'actions' ? 'center' : 'right' }}
+                >
                   {col.render ? col.render(row) : row[col.accessor]}
                 </td>
               ))}

@@ -6,6 +6,8 @@ import Card from '../components/common/Card';
 import apiService from '../services/apiService';
 import { useToast } from '../context/ToastContext';
 import { FaPlus } from 'react-icons/fa';
+import { Card as ShadcnCard, CardContent } from '../components/ui/card';
+import { cn } from '../lib/utils';
 
 const AddItem = () => {
   const navigate = useNavigate();
@@ -27,31 +29,33 @@ const AddItem = () => {
   };
 
   return (
-    <div className="page">
-      <div style={{
-        background: 'linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%)',
-        borderRadius: '20px',
-        padding: 'clamp(1.25rem, 3vw, 2rem)',
-        marginBottom: '1.75rem',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '1.25rem',
-        boxShadow: '0 8px 32px rgba(155,89,182,0.25)',
-        position: 'relative',
-        overflow: 'hidden',
-      }}>
-        <div style={{ position: 'absolute', top: -30, right: -30, width: 120, height: 120, borderRadius: '50%', background: 'rgba(255,255,255,0.07)', pointerEvents: 'none' }} />
-        <div style={{ width: 52, height: 52, borderRadius: '14px', background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.25rem', color: '#fff', backdropFilter: 'blur(8px)', flexShrink: 0 }}>
-          <FaPlus />
-        </div>
-        <div>
-          <h1 style={{ margin: 0, color: '#fff', fontSize: 'clamp(1.1rem,2.5vw,1.5rem)', fontWeight: 800, letterSpacing: '-0.02em' }}>{t('items.addNewItem')}</h1>
-          <p style={{ margin: 0, color: 'rgba(255,255,255,0.8)', fontSize: '0.875rem', marginTop: '0.2rem' }}>أضف صنفاً جديداً إلى كتالوج مخزونك</p>
+    <div className="space-y-4 sm:space-y-6">
+      {/* Page header with gradient */}
+      <div className="relative overflow-hidden rounded-2xl p-4 sm:p-6 md:p-8 mb-4 sm:mb-6 shadow-lg" style={{ background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)' }}>
+        {/* Decorative circles */}
+        <div className="absolute top-0 right-0 w-48 h-48 rounded-full bg-white/10 -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-32 h-32 rounded-full bg-white/8 translate-y-1/2 -translate-x-1/2 pointer-events-none" />
+
+        <div className="relative flex items-center gap-3 sm:gap-5">
+          <div className="flex h-12 w-12 sm:h-14 sm:w-14 md:h-16 md:w-16 shrink-0 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-sm text-white shadow-lg">
+            <FaPlus size={24} className="sm:size-26 md:size-28" />
+          </div>
+          <div className="space-y-1">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white drop-shadow-sm">
+              {t('items.addNewItem')}
+            </h1>
+            <p className="text-sm sm:text-base text-white/90 font-medium">
+              أضف صنفاً جديداً إلى كتالوج مخزونك
+            </p>
+          </div>
         </div>
       </div>
-      <div style={{ maxWidth: 700, background: 'var(--color-card-background)', borderRadius: '20px', border: '1px solid var(--color-border-light)', boxShadow: 'var(--shadow-card)', padding: '1.75rem' }}>
-        <ItemForm onSave={handleSave} onCancel={handleCancel} />
-      </div>
+
+      <ShadcnCard className="border-border/60 shadow-lg shadow-black/5 max-w-2xl mx-auto">
+        <CardContent className="p-4 sm:p-6 md:p-8">
+          <ItemForm onSave={handleSave} onCancel={handleCancel} />
+        </CardContent>
+      </ShadcnCard>
     </div>
   );
 };

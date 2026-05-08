@@ -22,7 +22,8 @@ cd frontend
 npm install
 npm start        # dev server on :3000
 npm run build    # production build
-npx prettier --write src/
+npm run format        # format with Prettier
+npm run format:check  # check formatting without writing
 ```
 
 **Docker:**
@@ -34,7 +35,7 @@ docker-compose down
 ## Code Style & Conventions
 
 - **Backend**: FastAPI routers in `app/routers/`, Pydantic schemas in `app/schemas/`, business logic in `app/services/`. Use `get_db()` dependency injection for sessions. All endpoints decorated with `@router.get/post/put/delete`. Format with Ruff.
-- **Frontend**: React 19, function components with hooks. Pages in `pages/`, shared UI in `components/common/`, state in `context/`, API calls through `services/apiService.js`. Format with Prettier. i18n keys in `locales/{ar,en}.json`.
+- **Frontend**: React 19, function components with hooks. Pages in `pages/`, shared UI in `components/common/`, state in `context/`, API calls through `services/apiService.js`. Format with Prettier (singleQuote, trailingComma es5, printWidth 100 - see .prettierrc). i18n keys in `locales/{ar,en}.json`.
 - **Naming**: Python — `snake_case` for functions/vars, `PascalCase` for models/schemas. JS — `camelCase` for functions/vars, `PascalCase` for components/files.
 - **Auth**: JWT token in `Authorization: Bearer <token>` header. Use `get_current_user()` from `utils/dependencies.py` for protected routes.
 
@@ -48,7 +49,8 @@ pytest app/tests/test_auth.py -v   # single file
 
 # Frontend
 cd frontend
-npm test                           # react-scripts test
+npm test                           # react-scripts test (Jest + React Testing Library)
+npm run format:check              # check formatting without writing
 ```
 
 ## API Architecture
@@ -60,7 +62,7 @@ All REST endpoints under prefixes. Auth optional for most; `scanning/` requires 
 | Auth | `/auth/` | `POST /register`, `POST /login` |
 | Items | `/items/` | CRUD + filter by `?name=&sku=&category_id=` |
 | Categories | `/categories/` | CRUD |
-| Stock | `/stock/` | `GET /levels`, `POST /movement`, `GET /movements` |
+| Stock | `/stock/` | `GET /levels`, `POST /movement`, `GET /movements` | Frontend Stock page is tabbed with 3 sub-views: StockLevels, StockMovements, StockTracking |
 | Purchases | `/purchases/` | CRUD + `GET /summary` + payment endpoints |
 | Sales | `/sales-invoices/` | CRUD + `GET /summary` (deducts stock) |
 | Installments | `/installment-sales/` | CRUD + payments, receipts, refunds, CSV export |
@@ -70,13 +72,33 @@ All REST endpoints under prefixes. Auth optional for most; `scanning/` requires 
 
 Auth flow: `POST /auth/login` returns `{"access_token": "...", "token_type": "bearer"}`. Token expiry: 30 min (configurable in `app/config.py`).
 
+## Frontend Route Map
+
+| Path | Component | Protected | Description |
+|------|-----------|-----------|-------------|
+| `/login` | Login | No | Authentication page |
+| `/` | Dashboard | Yes | Main dashboard with stats |
+| `/purchases` | Purchases | Yes | Purchase management |
+| `/sales-invoice` | SalesInvoice | Yes | Sales invoice creation |
+| `/quick-invoice` | QuickInvoice | Yes | Quick invoice entry |
+| `/installment-sales` | InstallmentSales | Yes | Installment plan creation |
+| `/installment-sales/list` | InstallmentSalesList | Yes | Installment plans list |
+| `/items` | ItemCatalog | Yes | Item catalog view |
+| `/items/new` | AddItem | Yes | Add new item |
+| `/items/edit/:id` | EditItem | Yes | Edit existing item |
+| `/categories` | Categories | Yes | Category management |
+| `/stock` | Stock | Yes | Stock management (tabbed: Levels, Movements, Tracking) |
+| `/alerts` | Alerts | Yes | Alert management |
+| `/notifications` | Notifications | Yes | Notification center |
+| `/scan` | Scanning | Yes | Barcode scanning |
+
 ## Boundaries (Hard Rules)
 
 - **NEVER** commit `.env`, `inventory.db`, `test.db`, `venv/`, `node_modules/`, `__pycache__/`, `.pytest_cache/`, `.ruff_cache/`
 - **NEVER** change `SECRET_KEY` or `DATABASE_URL` in `app/config.py` without flagging it
 - **ALWAYS** run `pytest -v` before completing backend changes
 - **ALWAYS** update `docs/backend-api-documentation.md` when modifying endpoints
-- **ALWAYS** keep `ar.json` and `en.json` translation keys in sync (227 keys each)
+- **ALWAYS** keep `ar.json` and `en.json` translation keys in sync (197 keys each)
 - **CONSULT** `docs/` for feature specs before implementing: `features.md`, `backend-architecture.md`, `frontend-documentation.md`, `alerts-implementation.md`
 
 ## Project Structure
@@ -99,13 +121,17 @@ backend/              # FastAPI app
 frontend/              # React app
 ├── src/
 │   ├── App.js           # Router + providers
-│   ├── pages/           # 19 page components
+│   ├── index.js         # Entry point (imports i18n, renders App)
+│   ├── pages/           # 16 route pages (3 stock tab sub-components: StockLevels, StockMovements, StockTracking)
 │   ├── components/      # Reusable UI (auth, common, layout, etc.)
 │   ├── context/         # Auth, Theme, Toast providers
 │   ├── services/        # apiService.js (all API calls)
 │   ├── hooks/           # Custom hooks
 │   ├── locales/         # ar.json, en.json
-│   └── styles/          # CSS files
+│   ├── styles/          # CSS files
+│   ├── setupTests.js    # Test setup (imports @testing-library/jest-dom)
+│   ├── reportWebVitals.js # CRA boilerplate
+│   └── index.css        # CRA body styles
 ├── public/
 └── package.json
 

@@ -16,7 +16,15 @@ const FloatingActionButton = () => {
   return (
     <div style={{ position: 'fixed', bottom: '2rem', right: '2rem', zIndex: 1000 }}>
       {isOpen && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1rem', alignItems: 'flex-end' }}>
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '0.75rem',
+            marginBottom: '1rem',
+            alignItems: 'flex-end',
+          }}
+        >
           {actions.map((action, index) => (
             <button
               key={action.path}

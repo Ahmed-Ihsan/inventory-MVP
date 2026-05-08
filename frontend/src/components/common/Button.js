@@ -1,4 +1,6 @@
 import React from 'react';
+import { Button as UiButton } from '../ui/button';
+import { cn } from '../../lib/utils';
 
 const Button = ({
   children,
@@ -9,19 +11,30 @@ const Button = ({
   style = {},
   loading = false,
   fullWidth = false,
+  variant,
+  size,
+  ...rest
 }) => {
   return (
-    <button
+    <UiButton
       type={type}
       onClick={onClick}
       disabled={disabled || loading}
-      className={`btn ${className}${fullWidth ? ' btn-full-width' : ''}${loading ? ' btn-loading' : ''}`}
+      className={cn(fullWidth && 'w-full', className)}
       style={style}
       aria-busy={loading}
+      variant={variant}
+      size={size}
+      {...rest}
     >
-      {loading && <span className="btn-spinner" aria-hidden="true" />}
+      {loading && (
+        <span
+          className="inline-block h-4 w-4 rounded-full border-2 border-current border-t-transparent animate-spin"
+          aria-hidden="true"
+        />
+      )}
       {children}
-    </button>
+    </UiButton>
   );
 };
 

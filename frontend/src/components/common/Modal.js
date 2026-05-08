@@ -7,7 +7,9 @@ const Modal = ({ isOpen, onClose, title, children, size = 'md' }) => {
     if (!isOpen) return;
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
-    const handleKey = (e) => { if (e.key === 'Escape') onClose(); };
+    const handleKey = (e) => {
+      if (e.key === 'Escape') onClose();
+    };
     document.addEventListener('keydown', handleKey);
     return () => {
       document.body.style.overflow = prev;
@@ -35,11 +37,11 @@ const Modal = ({ isOpen, onClose, title, children, size = 'md' }) => {
       >
         <div className="modal-header">
           <h2 id="modal-title">{title}</h2>
-          <button onClick={onClose} aria-label="إغلاق النافذة">×</button>
+          <button onClick={onClose} aria-label="إغلاق النافذة">
+            ×
+          </button>
         </div>
-        <div className="modal-body">
-          {children}
-        </div>
+        <div className="modal-body">{children}</div>
       </div>
     </div>
   );

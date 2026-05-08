@@ -6,6 +6,9 @@ import ConfirmDialog from '../components/common/ConfirmDialog';
 import apiService from '../services/apiService';
 import { useToast } from '../context/ToastContext';
 import { FaBell, FaCheck, FaTrash, FaSync } from 'react-icons/fa';
+import { Card as ShadcnCard, CardContent } from '../components/ui/card';
+import { Button } from '../components/ui/button';
+import { cn } from '../lib/utils';
 
 const Notifications = () => {
   const { t } = useTranslation();
@@ -82,101 +85,182 @@ const Notifications = () => {
     }
   };
 
-  const unreadCount = notifications.filter(n => !n.is_read).length;
+  const unreadCount = notifications.filter((n) => !n.is_read).length;
 
   return (
-    <div className="page">
-      <div style={{
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-        borderRadius: '24px',
-        padding: 'clamp(1.5rem, 4vw, 2.5rem)',
-        marginBottom: '2rem',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        flexWrap: 'wrap',
-        gap: '1rem',
-        boxShadow: '0 20px 60px rgba(102,126,234,0.3)',
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-          <div style={{ width: 64, height: 64, borderRadius: '20px', background: 'rgba(255,255,255,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.75rem', color: '#fff' }}>
-            <FaBell />
+    <div className="space-y-4 sm:space-y-6">
+      {/* Page header with gradient */}
+      <div className="relative overflow-hidden rounded-2xl p-4 sm:p-6 md:p-8 mb-4 sm:mb-6 shadow-lg" style={{ background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)' }}>
+        {/* Decorative circles */}
+        <div className="absolute top-0 right-0 w-48 h-48 rounded-full bg-white/10 -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-32 h-32 rounded-full bg-white/8 translate-y-1/2 -translate-x-1/2 pointer-events-none" />
+
+        <div className="relative flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-6">
+          <div className="flex items-center gap-3 sm:gap-5 w-full sm:w-auto">
+            <div className="flex h-12 w-12 sm:h-14 sm:w-14 md:h-16 md:w-16 shrink-0 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-sm text-white shadow-lg">
+              <FaBell size={24} className="sm:size-26 md:size-28" />
+            </div>
+            <div className="space-y-1">
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white drop-shadow-sm">
+                الإشعارات
+              </h1>
+              <p className="text-sm sm:text-base text-white/90 font-medium">
+                {notifications.length} إشعار · {unreadCount} غير مقروء
+              </p>
+            </div>
           </div>
-          <div>
-            <h1 style={{ margin: 0, color: '#fff', fontSize: 'clamp(1.25rem, 3vw, 1.75rem)', fontWeight: 800 }}>الإشعارات</h1>
-            <p style={{ margin: 0, color: 'rgba(255,255,255,0.8)', fontSize: '0.9rem' }}>
-              {notifications.length} إشعار · {unreadCount} غير مقروء
-            </p>
+          <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-3 w-full sm:w-auto mt-2 sm:mt-0">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleCheckDuePayments}
+              className="bg-white/15 hover:bg-white/25 text-white border-white/30 backdrop-blur-sm flex-1 sm:flex-none text-xs sm:text-sm"
+            >
+              <FaSync size={12} className="sm:size-13 mr-2" />
+              فحص المستحق
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleCheckOverduePayments}
+              className="bg-white/15 hover:bg-white/25 text-white border-white/30 backdrop-blur-sm flex-1 sm:flex-none text-xs sm:text-sm"
+            >
+              <FaSync size={12} className="sm:size-13 mr-2" />
+              فحص المتأخر
+            </Button>
+            {unreadCount > 0 && (
+              <Button
+                size="sm"
+                onClick={handleMarkAllAsRead}
+                className="bg-white text-purple-600 hover:bg-white/90 font-semibold shadow-lg flex-1 sm:flex-none text-xs sm:text-sm"
+              >
+                <FaCheck size={12} className="sm:size-13 mr-2" />
+                تحديد الكل كمقروء
+              </Button>
+            )}
           </div>
-        </div>
-        <div style={{ display: 'flex', gap: '0.75rem' }}>
-          <button onClick={handleCheckDuePayments} style={{ background: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.4)', color: '#fff', padding: '0.6rem 1.25rem', borderRadius: '10px', cursor: 'pointer', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <FaSync size={13} /> فحص المستحق
-          </button>
-          <button onClick={handleCheckOverduePayments} style={{ background: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.4)', color: '#fff', padding: '0.6rem 1.25rem', borderRadius: '10px', cursor: 'pointer', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <FaSync size={13} /> فحص المتأخر
-          </button>
-          {unreadCount > 0 && (
-            <button onClick={handleMarkAllAsRead} style={{ background: '#fff', border: 'none', color: '#667eea', padding: '0.6rem 1.25rem', borderRadius: '10px', cursor: 'pointer', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <FaCheck size={13} /> تحديد الكل كمقروء
-            </button>
-          )}
         </div>
       </div>
 
-      <div style={{ background: 'var(--color-card-background)', borderRadius: '28px', border: '1px solid var(--color-border-light)', padding: '2.5rem' }}>
+      <ShadcnCard className="border-border/60 shadow-lg shadow-black/5">
+        <CardContent className="p-4 sm:p-6 md:p-10">
         {loading ? (
-          <div style={{ textAlign: 'center', padding: '3rem' }}>جاري التحميل...</div>
+          <div style={{ textAlign: 'center', padding: '2rem sm:3rem' }} className="text-xs sm:text-sm">جاري التحميل...</div>
         ) : notifications.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '4rem' }}>
-            <FaBell size={48} style={{ color: '#667eea', marginBottom: '1rem', opacity: 0.5 }} />
-            <h3 style={{ color: 'var(--color-text)', margin: '0 0 0.5rem' }}>لا توجد إشعارات</h3>
+          <div style={{ textAlign: 'center', padding: '2rem sm:4rem' }}>
+            <FaBell size={36} className="sm:size-48" style={{ color: '#667eea', marginBottom: '0.75rem sm:1rem', opacity: 0.5 }} />
+            <h3 style={{ color: 'var(--color-text)', margin: '0 0 0.5rem' }} className="text-sm sm:text-base">لا توجد إشعارات</h3>
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem sm:gap-1rem' }}>
             {notifications.map((notification, index) => (
               <div
                 key={notification.id || `notification-${notification.created_at}-${index}`}
                 style={{
-                  padding: '1.25rem 1.5rem',
-                  borderRadius: '16px',
-                  background: notification.is_read ? 'var(--color-surface)' : 'linear-gradient(135deg, #667eea15 0%, #764ba215 100%)',
-                  border: notification.is_read ? '1px solid var(--color-border-light)' : '2px solid #667eea40',
+                  padding: '1rem 1.25rem sm:padding: 1.25rem 1.5rem',
+                  borderRadius: '12px sm:rounded-16px',
+                  background: notification.is_read
+                    ? 'var(--color-surface)'
+                    : 'linear-gradient(135deg, #667eea15 0%, #764ba215 100%)',
+                  border: notification.is_read
+                    ? '1px solid var(--color-border-light)'
+                    : '2px solid #667eea40',
                   display: 'flex',
-                  alignItems: 'center',
-                  gap: '1rem',
+                  alignItems: 'flex-start sm:items-center',
+                  gap: '0.75rem sm:gap-1rem',
                   transition: 'all 0.2s',
                 }}
               >
-                <div style={{ width: 44, height: 44, borderRadius: '12px', background: notification.notification_type === 'payment_due' ? '#f59e0b20' : '#ef444420', color: notification.notification_type === 'payment_due' ? '#f59e0b' : '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  {notification.notification_type === 'payment_due' ? <FaBell size={18} /> : <FaBell size={18} />}
+                <div
+                  style={{
+                    width: 36,
+                    height: 36,
+                    smWidth: 44,
+                    smHeight: 44,
+                    borderRadius: '10px sm:rounded-12px',
+                    background:
+                      notification.notification_type === 'payment_due' ? '#f59e0b20' : '#ef444420',
+                    color: notification.notification_type === 'payment_due' ? '#f59e0b' : '#ef4444',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                  }}
+                >
+                  <FaBell size={14} className="sm:size-18" />
                 </div>
-                <div style={{ flex: 1 }}>
-                  <h4 style={{ margin: '0 0 0.25rem', fontWeight: 700, color: 'var(--color-text)' }}>
-                    {notification.notification_type === 'payment_due' ? 'دفعة مستحقة' : 'دفعة متأخرة'}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <h4
+                    style={{ margin: '0 0 0.25rem', fontWeight: 700, color: 'var(--color-text)' }}
+                    className="text-sm sm:text-base"
+                  >
+                    {notification.notification_type === 'payment_due'
+                      ? 'دفعة مستحقة'
+                      : 'دفعة متأخرة'}
                   </h4>
-                  <p style={{ margin: 0, color: 'var(--color-text-secondary)', fontSize: '0.9rem' }}>
+                  <p
+                    style={{ margin: 0, color: 'var(--color-text-secondary)', fontSize: '0.8rem sm:fontSize: 0.9rem' }}
+                  >
                     {notification.message}
                   </p>
-                  <p style={{ margin: '0.25rem 0 0', color: 'var(--color-text-muted)', fontSize: '0.8rem' }}>
+                  <p
+                    style={{
+                      margin: '0.25rem 0 0',
+                      color: 'var(--color-text-muted)',
+                      fontSize: '0.75rem sm:fontSize: 0.8rem',
+                    }}
+                  >
                     {new Date(notification.created_at).toLocaleString('ar-SA')}
                   </p>
                 </div>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <div style={{ display: 'flex', gap: '0.4rem sm:gap-0.5rem', flexShrink: 0 }}>
                   {!notification.is_read && (
-                    <button onClick={() => handleMarkAsRead(notification.id)} style={{ width: 36, height: 36, borderRadius: '8px', background: '#667eea15', border: '1px solid #667eea30', color: '#667eea', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <FaCheck size={14} />
+                    <button
+                      onClick={() => handleMarkAsRead(notification.id)}
+                      style={{
+                        width: 32,
+                        height: 32,
+                        smWidth: 36,
+                        smHeight: 36,
+                        borderRadius: '8px',
+                        background: '#667eea15',
+                        border: '1px solid #667eea30',
+                        color: '#667eea',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <FaCheck size={12} className="sm:size-14" />
                     </button>
                   )}
-                  <button onClick={() => setConfirmDeleteId(notification.id)} style={{ width: 36, height: 36, borderRadius: '8px', background: '#ef444415', border: '1px solid #ef444430', color: '#ef4444', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <FaTrash size={14} />
+                  <button
+                    onClick={() => setConfirmDeleteId(notification.id)}
+                    style={{
+                      width: 32,
+                      height: 32,
+                      smWidth: 36,
+                      smHeight: 36,
+                      borderRadius: '8px',
+                      background: '#ef444415',
+                      border: '1px solid #ef444430',
+                      color: '#ef4444',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <FaTrash size={12} className="sm:size-14" />
                   </button>
                 </div>
               </div>
             ))}
           </div>
         )}
-      </div>
+        </CardContent>
+      </ShadcnCard>
 
       <ConfirmDialog
         isOpen={!!confirmDeleteId}

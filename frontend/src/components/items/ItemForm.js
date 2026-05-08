@@ -1,25 +1,58 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import FormField from '../common/FormField';
 import Button from '../common/Button';
 import apiService from '../../services/apiService';
 import useFormValidation from '../../hooks/useFormValidation';
+import { useToast } from '../../context/ToastContext';
 
 const validators = {
-  name: (v) => !v?.trim() ? 'اسم العنصر مطلوب' : v.trim().length < 2 ? 'يجب أن يكون الاسم حرفين على الأقل' : '',
-  sku: (v) => !v?.trim() ? 'رمز العنصر (SKU) مطلوب' : '',
-  price: (v) => v === '' || v === undefined ? 'السعر مطلوب' : parseFloat(v) < 0 ? 'يجب أن يكون السعر صفرًا أو أكثر' : '',
-  category_id: (v) => !v ? 'الفئة مطلوبة' : '',
+  name: (v) =>
+    !v?.trim()
+      ? 'اسم العنصر مطلوب'
+      : v.trim().length < 2
+        ? 'يجب أن يكون الاسم حرفين على الأقل'
+        : '',
+  sku: (v) => (!v?.trim() ? 'رمز العنصر (SKU) مطلوب' : ''),
+  price: (v) =>
+    v === '' || v === undefined
+      ? 'السعر مطلوب'
+      : parseFloat(v) < 0
+        ? 'يجب أن يكون السعر صفرًا أو أكثر'
+        : '',
+  category_id: (v) => (!v ? 'الفئة مطلوبة' : ''),
 };
 
 const ItemForm = ({ item = null, onSave, onCancel }) => {
   const { t } = useTranslation();
+  const { addToast } = useToast();
   const [categories, setCategories] = useState([]);
   const [existingSkus, setExistingSkus] = useState([]);
-  const initializedRef = useRef(false);
 
-  const { values, setValues, errors, handleChange, handleBlur, validateAll, isSubmitting, setIsSubmitting } = useFormValidation(
-    { name: '', description: '', sku: '', price: 0, category_id: '', min_stock_level: 0, initial_stock: 0, supplier: '', unit_of_measure: 'piece', expiry_date: '', batch_number: '', cost_price: 0 },
+  const {
+    values,
+    setValues,
+    errors,
+    handleChange,
+    handleBlur,
+    validateAll,
+    isSubmitting,
+    setIsSubmitting,
+  } = useFormValidation(
+    {
+      name: '',
+      description: '',
+      sku: '',
+      price: 0,
+      category_id: '',
+      min_stock_level: 0,
+      initial_stock: 0,
+      supplier: '',
+      unit_of_measure: 'piece',
+      expiry_date: '',
+      batch_number: '',
+      cost_price: 0,
+    },
     validators
   );
 
@@ -30,7 +63,7 @@ const ItemForm = ({ item = null, onSave, onCancel }) => {
     const cost = parseFloat(values.cost_price) || 0;
     const selling = parseFloat(values.price) || 0;
     if (selling > 0) {
-      const margin = ((selling - cost) / selling * 100).toFixed(2);
+      const margin = (((selling - cost) / selling) * 100).toFixed(2);
       setProfitMargin(parseFloat(margin));
     } else {
       setProfitMargin(0);
@@ -43,7 +76,7 @@ const ItemForm = ({ item = null, onSave, onCancel }) => {
   }, []);
 
   useEffect(() => {
-    if (item && item.id && !initializedRef.current) {
+    if (item) {
       setValues({
         name: item.name || '',
         description: item.description || '',
@@ -58,11 +91,8 @@ const ItemForm = ({ item = null, onSave, onCancel }) => {
         batch_number: item.batch_number || '',
         cost_price: item.cost_price || 0,
       });
-      initializedRef.current = true;
-    } else if (!item) {
-      initializedRef.current = false;
     }
-  }, [item?.id, setValues]);
+  }, [item, setValues]);
 
   const loadCategories = async () => {
     try {
@@ -76,7 +106,7 @@ const ItemForm = ({ item = null, onSave, onCancel }) => {
   const loadExistingSkus = async () => {
     try {
       const items = await apiService.getItems();
-      setExistingSkus(items.map(i => i.sku));
+      setExistingSkus(items.map((i) => i.sku));
     } catch (error) {
       console.error('Error loading SKUs:', error);
     }
@@ -84,14 +114,14 @@ const ItemForm = ({ item = null, onSave, onCancel }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     // Check for duplicate SKU (skip check if editing same item)
     const isDuplicateSku = existingSkus.includes(values.sku) && (!item || item.sku !== values.sku);
     if (isDuplicateSku) {
-      alert('هذا الرمز (SKU) مستخدم بالفعل. يرجى اختيار رمز آخر.');
+      addToast('هذا الرمز (SKU) مستخدم بالفعل. يرجى اختيار رمز آخر.', 'error');
       return;
     }
-    
+
     if (!validateAll()) return;
     setIsSubmitting(true);
     try {
@@ -178,10 +208,32 @@ const ItemForm = ({ item = null, onSave, onCancel }) => {
         help="سعر الشراء أو التكلفة (اختياري)"
       />
 
-      <div style={{ padding: '1rem', background: 'var(--color-surface)', borderRadius: '12px', border: '1px solid var(--color-border-light)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+      <div
+        style={{
+          padding: '1rem',
+          background: 'var(--color-surface)',
+          borderRadius: '12px',
+          border: '1px solid var(--color-border-light)',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '1rem',
+        }}
+      >
         <div>
-          <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', fontWeight: 600 }}>هامش الربح:</span>
-          <span style={{ fontSize: '1.25rem', fontWeight: 700, marginLeft: '0.5rem', color: profitMargin >= 0 ? '#10b981' : '#ef4444' }}>{profitMargin}%</span>
+          <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', fontWeight: 600 }}>
+            هامش الربح:
+          </span>
+          <span
+            style={{
+              fontSize: '1.25rem',
+              fontWeight: 700,
+              marginLeft: '0.5rem',
+              color: profitMargin >= 0 ? '#10b981' : '#ef4444',
+            }}
+          >
+            {profitMargin}%
+          </span>
         </div>
       </div>
 
@@ -196,8 +248,10 @@ const ItemForm = ({ item = null, onSave, onCancel }) => {
         required
       >
         <option value="">-- {t('common.select')} --</option>
-        {categories.map(cat => (
-          <option key={cat.id} value={cat.id}>{cat.name}</option>
+        {categories.map((cat) => (
+          <option key={cat.id} value={cat.id}>
+            {cat.name}
+          </option>
         ))}
       </FormField>
 
@@ -272,7 +326,9 @@ const ItemForm = ({ item = null, onSave, onCancel }) => {
         help="رقم الدفعة لتتبع المنتجات"
       />
 
-      <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end', marginTop: '1.5rem' }}>
+      <div
+        style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end', marginTop: '1.5rem' }}
+      >
         <Button type="button" onClick={onCancel} className="btn-secondary" disabled={isSubmitting}>
           {t('common.cancel')}
         </Button>

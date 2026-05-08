@@ -13,9 +13,10 @@ const CategoryList = ({ onEdit, onAdd, onDelete }) => {
   const [searchTerm, setSearchTerm] = useState('');
 
   const filteredCategories = useMemo(() => {
-    return categories.filter(category =>
-      category.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      category.description.toLowerCase().includes(searchTerm.toLowerCase())
+    return categories.filter(
+      (category) =>
+        category.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        category.description.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [categories, searchTerm]);
 
@@ -28,7 +29,9 @@ const CategoryList = ({ onEdit, onAdd, onDelete }) => {
       render: (category) => (
         <div style={{ display: 'flex', gap: '0.5rem' }}>
           <Button onClick={() => onEdit(category)}>{t('common.edit')}</Button>
-          <Button className="btn-danger" onClick={() => onDelete(category.id)}>{t('common.delete')}</Button>
+          <Button className="btn-danger" onClick={() => onDelete(category.id)}>
+            {t('common.delete')}
+          </Button>
         </div>
       ),
     },
@@ -38,7 +41,14 @@ const CategoryList = ({ onEdit, onAdd, onDelete }) => {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '1rem',
+        }}
+      >
         <h2>{t('categories.management')}</h2>
         <Button onClick={onAdd}>{t('categories.addNew')}</Button>
       </div>
@@ -52,10 +62,7 @@ const CategoryList = ({ onEdit, onAdd, onDelete }) => {
       </div>
 
       {filteredCategories.length === 0 ? (
-        <EmptyState
-          type="no-results"
-          onAction={() => setSearchTerm('')}
-        />
+        <EmptyState type="no-results" onAction={() => setSearchTerm('')} />
       ) : (
         <Table columns={columns} data={filteredCategories} />
       )}

@@ -4,13 +4,13 @@ import { FaChevronLeft } from 'react-icons/fa';
 
 const Breadcrumbs = () => {
   const location = useLocation();
-  const pathnames = location.pathname.split('/').filter(x => x);
+  const pathnames = location.pathname.split('/').filter((x) => x);
 
   const breadcrumbNameMap = {
-    'items': 'العناصر',
-    'stock': 'المخزون',
-    'scan': 'المسح',
-    'dashboard': 'لوحة التحكم',
+    items: 'العناصر',
+    stock: 'المخزون',
+    scan: 'المسح',
+    dashboard: 'لوحة التحكم',
   };
 
   return (
@@ -50,9 +50,7 @@ const Breadcrumbs = () => {
             <li key={pathname} style={{ display: 'flex', alignItems: 'center' }}>
               <span style={{ margin: '0 0.5rem', color: 'var(--color-gray)' }}>/</span>
               {isLast ? (
-                <span style={{ color: 'var(--color-text)', fontWeight: '500' }}>
-                  {displayName}
-                </span>
+                <span style={{ color: 'var(--color-text)', fontWeight: '500' }}>{displayName}</span>
               ) : (
                 <Link
                   to={routeTo}

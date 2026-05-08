@@ -50,5 +50,12 @@ export const useCategories = () => {
     fetchCategories();
   }, []);
 
-  return { categories, loading, addCategory, updateCategory, deleteCategory, refetch: fetchCategories };
+  return {
+    categories,
+    loading,
+    addCategory,
+    updateCategory,
+    deleteCategory,
+    refetch: fetchCategories,
+  };
 };

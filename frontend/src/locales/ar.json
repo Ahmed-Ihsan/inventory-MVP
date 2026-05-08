@@ -22,7 +22,13 @@
     "items": "العناصر",
     "categories": "الفئات",
     "stock": "المخزون",
-    "scan": "المسح"
+    "scan": "المسح",
+    "inventory": "المخزون",
+    "finance": "المالية",
+    "other": "أخرى",
+    "alerts": "التنبيهات",
+    "installments": "الأقساط",
+    "notifications": "الإشعارات"
   },
   "auth": {
     "login": "تسجيل الدخول",
@@ -33,7 +39,20 @@
     "loginButton": "دخول",
     "registerButton": "تسجيل",
     "alreadyHaveAccount": "لديك حساب بالفعل؟ تسجيل الدخول",
-    "needAccount": "تحتاج حساب؟ التسجيل"
+    "needAccount": "تحتاج حساب؟ التسجيل",
+    "manageInventory": "إدارة المخزون والأصناف بكفاءة عالية",
+    "trackSales": "تتبع المبيعات والمشتريات لحظةً بلحظة",
+    "trackDebts": "متابعة الديون والمدفوعات بدقة",
+    "secureData": "بيانات آمنة ومحمية بالكامل",
+    "heroTitle": "أدِر مخزونك",
+    "heroSubtitle": "بكل سهولة",
+    "heroDescription": "منصة متكاملة لإدارة المخزون، المشتريات، والمدفوعات — مصممة لتوفير وقتك وتنظيم أعمالك.",
+    "createAccountSubtitle": "أنشئ حسابك للبدء في إدارة مخزونك",
+    "welcomeBackSubtitle": "مرحباً بك! سجّل دخولك للمتابعة",
+    "brandName": "نظام إدارة المخزون",
+    "brandSubtitle": "Inventory Management System",
+    "haveAccount": "لديك حساب بالفعل؟",
+    "noAccount": "ليس لديك حساب؟"
   },
   "items": {
     "catalog": "كتالوج العناصر",
@@ -79,7 +98,15 @@
     "description": "الوصف",
     "addNew": "إضافة فئة جديدة",
     "confirmDelete": "هل أنت متأكد من حذف هذه الفئة؟",
-    "noCategories": "لا توجد فئات"
+    "noCategories": "لا توجد فئات",
+    "registeredCategories": "فئة مسجلة",
+    "editCategory": "تعديل الفئة",
+    "addCategory": "إضافة فئة جديدة",
+    "noCategoriesYet": "لا توجد فئات بعد",
+    "addFirstCategory": "أضف أول فئة لتنظيم مخزونك",
+    "deleteCategory": "حذف الفئة",
+    "deleteCategoryMessage": "هل أنت متأكد من حذف هذه الفئة؟ لا يمكن التراجع عن هذا الإجراء.",
+    "categoryRequired": "اسم الفئة مطلوب"
   },
   "dashboard": {
     "welcome": "مرحباً بك في إدارة المخزون",
@@ -94,6 +121,7 @@
     "charts": {
       "revenueVsDebt": "اتجاه الإيرادات مقابل الديون",
       "inventoryHealth": "توزيع صحة المخزون",
+      "inventoryHealthDescription": "نظرة عامة على حالة المخزون لجميع العناصر",
       "healthyStock": "مخزون صحي",
       "lowStockItems": "عناصر مخزون منخفض",
       "outOfStock": "نفد المخزون"

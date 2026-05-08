@@ -22,7 +22,13 @@
     "items": "Items",
     "categories": "Categories",
     "stock": "Stock",
-    "scan": "Scan"
+    "scan": "Scan",
+    "inventory": "Inventory",
+    "finance": "Finance",
+    "other": "Other",
+    "alerts": "Alerts",
+    "installments": "Installments",
+    "notifications": "Notifications"
   },
   "auth": {
     "login": "Login",
@@ -33,7 +39,20 @@
     "loginButton": "Login",
     "registerButton": "Register",
     "alreadyHaveAccount": "Already have an account? Login",
-    "needAccount": "Need an account? Register"
+    "needAccount": "Need an account? Register",
+    "manageInventory": "Manage inventory and items with high efficiency",
+    "trackSales": "Track sales and purchases in real-time",
+    "trackDebts": "Track debts and payments with precision",
+    "secureData": "Secure and fully protected data",
+    "heroTitle": "Manage Your",
+    "heroSubtitle": "Inventory Easily",
+    "heroDescription": "An integrated platform for inventory management, purchases, and payments — designed to save your time and organize your business.",
+    "createAccountSubtitle": "Create your account to start managing your inventory",
+    "welcomeBackSubtitle": "Welcome back! Sign in to continue",
+    "brandName": "Inventory Management System",
+    "brandSubtitle": "Inventory Management System",
+    "haveAccount": "Already have an account?",
+    "noAccount": "Don't have an account?"
   },
   "items": {
     "catalog": "Item Catalog",
@@ -79,7 +98,15 @@
     "description": "Description",
     "addNew": "Add New Category",
     "confirmDelete": "Are you sure you want to delete this category?",
-    "noCategories": "No categories found"
+    "noCategories": "No categories found",
+    "registeredCategories": "categories",
+    "editCategory": "Edit Category",
+    "addCategory": "Add New Category",
+    "noCategoriesYet": "No categories yet",
+    "addFirstCategory": "Add your first category to organize your inventory",
+    "deleteCategory": "Delete Category",
+    "deleteCategoryMessage": "Are you sure you want to delete this category? This action cannot be undone.",
+    "categoryRequired": "Category name is required"
   },
   "dashboard": {
     "welcome": "Welcome to Inventory Management",
@@ -94,6 +121,7 @@
     "charts": {
       "revenueVsDebt": "Revenue vs Debt Trend",
       "inventoryHealth": "Inventory Health Distribution",
+      "inventoryHealthDescription": "Overview of stock status across all items",
       "healthyStock": "Healthy Stock",
       "lowStockItems": "Low Stock Items",
       "outOfStock": "Out of Stock"

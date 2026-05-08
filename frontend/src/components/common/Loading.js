@@ -1,23 +1,20 @@
 import React from 'react';
+import { cn } from '../../lib/utils';
 
-const Loading = ({ size = 'md', color = 'var(--color-primary)' }) => {
-  const sizeMap = {
-    sm: '20px',
-    md: '40px',
-    lg: '60px',
-  };
+const sizeClasses = {
+  sm: 'h-5 w-5 border-2',
+  md: 'h-10 w-10 border-4',
+  lg: 'h-14 w-14 border-4',
+};
 
+const Loading = ({ size = 'md' }) => {
   return (
-    <div className="loading" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '2rem' }}>
+    <div className="flex items-center justify-center p-8" role="status" aria-label="Loading">
       <div
-        style={{
-          width: sizeMap[size],
-          height: sizeMap[size],
-          border: `4px solid ${color}20`,
-          borderTop: `4px solid ${color}`,
-          borderRadius: '50%',
-          animation: 'spin 1s linear infinite',
-        }}
+        className={cn(
+          'rounded-full border-primary/20 border-t-primary animate-spin',
+          sizeClasses[size]
+        )}
       />
     </div>
   );

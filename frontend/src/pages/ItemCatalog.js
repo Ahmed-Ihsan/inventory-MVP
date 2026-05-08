@@ -1,127 +1,183 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import Card from '../components/common/Card';
 import ItemList from '../components/items/ItemList';
-import Button from '../components/common/Button';
-import { FaPrint, FaBoxes, FaPlus } from 'react-icons/fa';
+import { Button } from '../components/ui/button';
+import { Card, CardContent } from '../components/ui/card';
+import { FaPrint, FaBoxes, FaPlus, FaBox, FaExclamationTriangle, FaCheckCircle } from 'react-icons/fa';
+import apiService from '../services/apiService';
+import { cn } from '../lib/utils';
 
 const ItemCatalog = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const [stats, setStats] = useState({ total: 0, lowStock: 0, outOfStock: 0, healthy: 0 });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadStats = async () => {
+      try {
+        const stockLevels = await apiService.getStockLevels();
+        const total = stockLevels.length;
+        const healthy = stockLevels.filter((i) => i.current_stock > i.min_stock_level).length;
+        const lowStock = stockLevels.filter((i) => i.current_stock > 0 && i.current_stock <= i.min_stock_level).length;
+        const outOfStock = stockLevels.filter((i) => i.current_stock === 0).length;
+        setStats({ total, lowStock, outOfStock, healthy });
+      } catch (error) {
+        console.error('Error loading stats:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadStats();
+  }, []);
 
   return (
-    <div className="page">
-      {/* Header Section */}
-      <div style={{
-        background: 'linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%)',
-        borderRadius: '24px',
-        padding: 'clamp(1.5rem, 4vw, 2.5rem)',
-        marginBottom: '2rem',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        flexWrap: 'wrap',
-        gap: '1rem',
-        boxShadow: '0 20px 60px rgba(155,89,182,0.3)',
-        position: 'relative',
-        overflow: 'hidden',
-      }}>
+    <div className="space-y-4 sm:space-y-6">
+      {/* Page header with gradient */}
+      <div className="relative overflow-hidden rounded-2xl p-4 sm:p-6 md:p-8 mb-4 sm:mb-6 shadow-lg" style={{ background: 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)' }}>
         {/* Decorative circles */}
-        <div style={{ position: 'absolute', top: -50, right: -50, width: 200, height: 200, borderRadius: '50%', background: 'rgba(255,255,255,0.1)', pointerEvents: 'none' }} />
-        <div style={{ position: 'absolute', bottom: -30, left: -30, width: 150, height: 150, borderRadius: '50%', background: 'rgba(255,255,255,0.08)', pointerEvents: 'none' }} />
-        
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', zIndex: 1 }}>
-          <div style={{ 
-            width: 64, 
-            height: 64, 
-            borderRadius: '20px', 
-            background: 'rgba(255,255,255,0.25)', 
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'center', 
-            fontSize: '1.75rem', 
-            color: '#fff', 
-            backdropFilter: 'blur(12px)',
-            boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
-          }}>
-            <FaBoxes />
+        <div className="absolute top-0 right-0 w-48 h-48 rounded-full bg-white/10 -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-32 h-32 rounded-full bg-white/8 translate-y-1/2 -translate-x-1/2 pointer-events-none" />
+
+        <div className="relative flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-6">
+          <div className="flex items-center gap-3 sm:gap-5 w-full sm:w-auto">
+            <div className="flex h-12 w-12 sm:h-14 sm:w-14 md:h-16 md:w-16 shrink-0 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-sm text-white shadow-lg text-2xl">
+              <FaBoxes />
+            </div>
+            <div className="space-y-1">
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white drop-shadow-sm">
+                {t('items.catalog')}
+              </h1>
+              <p className="text-sm sm:text-base text-white/90 font-medium">
+                {t('items.catalogDescription', { defaultValue: 'Browse and manage all items in your inventory' })}
+              </p>
+            </div>
           </div>
-          <div>
-            <h1 style={{ margin: 0, color: '#fff', fontSize: 'clamp(1.5rem,3vw,2rem)', fontWeight: 800, letterSpacing: '-0.03em', textShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>{t('items.catalog')}</h1>
-            <p style={{ margin: 0, color: 'rgba(255,255,255,0.9)', fontSize: '0.95rem', marginTop: '0.35rem', fontWeight: 500 }}>استعرض وأدر جميع الأصناف في مخزونك</p>
+          <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto mt-2 sm:mt-0">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => window.print()}
+              className="bg-white/10 hover:bg-white/20 text-white border-white/30 backdrop-blur-sm flex-1 sm:flex-none"
+            >
+              <FaPrint size={12} className="sm:size-13 mr-2" />
+              <span className="hidden sm:inline">{t('common.print')}</span>
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => navigate('/items/new')}
+              className="bg-white text-sky-600 hover:bg-white/90 font-semibold shadow-lg flex-1 sm:flex-none"
+            >
+              <FaPlus size={12} className="sm:size-13 mr-2" />
+              {t('items.addNewItem')}
+            </Button>
           </div>
-        </div>
-        <div style={{ display: 'flex', gap: '0.75rem', zIndex: 1 }}>
-          <button 
-            onClick={() => window.print()} 
-            style={{ 
-              background: 'rgba(255,255,255,0.15)', 
-              border: '1px solid rgba(255,255,255,0.3)', 
-              color: '#fff', 
-              padding: '0.875rem 1.5rem', 
-              borderRadius: '14px', 
-              cursor: 'pointer', 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: '0.5rem', 
-              fontWeight: 600, 
-              backdropFilter: 'blur(4px)', 
-              fontSize: '0.95rem',
-              transition: 'all 0.3s ease',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'rgba(255,255,255,0.25)';
-              e.currentTarget.style.transform = 'translateY(-2px)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'rgba(255,255,255,0.15)';
-              e.currentTarget.style.transform = 'translateY(0)';
-            }}
-          >
-            <FaPrint size={14} /> {t('common.print')}
-          </button>
-          <button 
-            onClick={() => navigate('/items/new')} 
-            style={{ 
-              background: '#fff', 
-              border: 'none', 
-              color: '#9b59b6', 
-              padding: '0.875rem 1.75rem', 
-              borderRadius: '14px', 
-              cursor: 'pointer', 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: '0.5rem', 
-              fontWeight: 700, 
-              fontSize: '0.95rem', 
-              boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
-              transition: 'all 0.3s ease',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'translateY(-2px)';
-              e.currentTarget.style.boxShadow = '0 12px 32px rgba(0,0,0,0.2)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.15)';
-            }}
-          >
-            <FaPlus size={14} /> {t('items.addNewItem')}
-          </button>
         </div>
       </div>
 
-      {/* Main Content */}
-      <div style={{ 
-        background: 'var(--color-card-background)', 
-        borderRadius: '24px', 
-        border: '1px solid var(--color-border-light)', 
-        boxShadow: '0 12px 40px rgba(0,0,0,0.08)', 
-        padding: '2rem',
-      }}>
-        <ItemList />
-      </div>
+      {/* Summary Cards */}
+      {!loading && (
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5 mb-4 sm:mb-6">
+          <Card className="group relative overflow-hidden border-border/60 shadow-lg shadow-black/5 hover:shadow-xl hover:shadow-sky-500/10 transition-all duration-300">
+            <div className="absolute inset-0 bg-gradient-to-br from-sky-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <CardContent className="relative p-3 sm:p-4 md:p-6">
+              <div className="flex items-center justify-between mb-2 sm:mb-4">
+                <span className="text-[10px] sm:text-xs md:text-sm font-semibold text-muted-foreground tracking-wide uppercase">
+                  {t('dashboard.totalItems')}
+                </span>
+                <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-xl bg-sky-500/10 text-sky-600 ring-1 ring-sky-500/20">
+                  <FaBox size={14} className="sm:size-18" />
+                </div>
+              </div>
+              <p className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-foreground drop-shadow-sm">
+                {stats.total}
+              </p>
+              <p className="text-[10px] sm:text-xs md:text-sm text-muted-foreground mt-1">إجمالي العناصر</p>
+            </CardContent>
+          </Card>
+
+          <Card className="group relative overflow-hidden border-border/60 shadow-lg shadow-black/5 hover:shadow-xl hover:shadow-emerald-500/10 transition-all duration-300">
+            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <CardContent className="relative p-3 sm:p-4 md:p-6">
+              <div className="flex items-center justify-between mb-2 sm:mb-4">
+                <span className="text-[10px] sm:text-xs md:text-sm font-semibold text-muted-foreground tracking-wide uppercase">
+                  مخزون صحي
+                </span>
+                <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 ring-1 ring-emerald-500/20">
+                  <FaCheckCircle size={14} className="sm:size-18" />
+                </div>
+              </div>
+              <p className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-emerald-600 dark:text-emerald-400 drop-shadow-sm">
+                {stats.healthy}
+              </p>
+              <p className="text-[10px] sm:text-xs md:text-sm text-muted-foreground mt-1">حالة جيدة</p>
+            </CardContent>
+          </Card>
+
+          <Card className="group relative overflow-hidden border-border/60 shadow-lg shadow-black/5 hover:shadow-xl hover:shadow-amber-500/10 transition-all duration-300">
+            <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <CardContent className="relative p-3 sm:p-4 md:p-6">
+              <div className="flex items-center justify-between mb-2 sm:mb-4">
+                <span className="text-[10px] sm:text-xs md:text-sm font-semibold text-muted-foreground tracking-wide uppercase">
+                  {t('dashboard.lowStock')}
+                </span>
+                <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 ring-1 ring-amber-500/20">
+                  <FaExclamationTriangle size={14} className="sm:size-18" />
+                </div>
+              </div>
+              <p className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-amber-600 dark:text-amber-400 drop-shadow-sm">
+                {stats.lowStock}
+              </p>
+              <p className="text-[10px] sm:text-xs md:text-sm text-muted-foreground mt-1">منخفض المخزون</p>
+            </CardContent>
+          </Card>
+
+          <Card className="group relative overflow-hidden border-border/60 shadow-lg shadow-black/5 hover:shadow-xl hover:shadow-red-500/10 transition-all duration-300">
+            <div className="absolute inset-0 bg-gradient-to-br from-red-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <CardContent className="relative p-3 sm:p-4 md:p-6">
+              <div className="flex items-center justify-between mb-2 sm:mb-4">
+                <span className="text-[10px] sm:text-xs md:text-sm font-semibold text-muted-foreground tracking-wide uppercase">
+                  نفد المخزون
+                </span>
+                <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-xl bg-red-500/10 text-red-600 ring-1 ring-red-500/20">
+                  <FaExclamationTriangle size={14} className="sm:size-18" />
+                </div>
+              </div>
+              <p className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-red-600 dark:text-red-400 drop-shadow-sm">
+                {stats.outOfStock}
+              </p>
+              <p className="text-[10px] sm:text-xs md:text-sm text-muted-foreground mt-1">غير متوفر</p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Low Stock Alert */}
+      {!loading && stats.lowStock > 0 && (
+        <div className="relative overflow-hidden rounded-xl p-3 sm:p-4 md:p-5 mb-4 sm:mb-6" style={{ background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' }}>
+          <div className="flex items-center gap-3 sm:gap-4">
+            <div className="flex h-10 w-10 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-xl bg-white/20 backdrop-blur-sm text-white">
+              <FaExclamationTriangle size={18} className="sm:size-22" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-sm sm:text-base md:text-lg font-bold text-white mb-0.5 sm:mb-1">
+                تنبيه: {stats.lowStock} عنصر بمخزون منخفض
+              </h3>
+              <p className="text-xs sm:text-sm text-white/90">
+                يرجى مراجعة العناصر ذات المخزون المنخفض وإعادة الطلب
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Content */}
+      <Card className="border-border/60 shadow-lg shadow-black/5">
+        <CardContent className="pt-4 sm:pt-6">
+          <ItemList />
+        </CardContent>
+      </Card>
     </div>
   );
 };

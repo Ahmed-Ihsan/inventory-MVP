@@ -8,9 +8,10 @@ class ApiService {
     this.token = localStorage.getItem('auth_token');
   }
 
-  // Get authorization headers
+  // Get authorization headers (reads fresh token from localStorage)
   getAuthHeaders() {
-    return this.token ? { 'Authorization': `Bearer ${this.token}` } : {};
+    const token = localStorage.getItem('auth_token');
+    return token ? { Authorization: `Bearer ${token}` } : {};
   }
 
   // Generic API call method
@@ -18,13 +19,13 @@ class ApiService {
     const url = `${this.baseURL}${endpoint}`;
     const defaultHeaders = {
       'Content-Type': 'application/json',
-      ...this.getAuthHeaders()
+      ...this.getAuthHeaders(),
     };
 
     try {
       const response = await fetch(url, {
         headers: defaultHeaders,
-        ...options
+        ...options,
       });
 
       if (response.status === 401) {
@@ -60,9 +61,9 @@ class ApiService {
     const response = await fetch(`${this.baseURL}/auth/login`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded'
+        'Content-Type': 'application/x-www-form-urlencoded',
       },
-      body: formData
+      body: formData,
     });
 
     if (!response.ok) {
@@ -79,7 +80,7 @@ class ApiService {
   async register(userData) {
     return this.apiCall('/auth/register', {
       method: 'POST',
-      body: JSON.stringify(userData)
+      body: JSON.stringify(userData),
     });
   }
 
@@ -96,20 +97,20 @@ class ApiService {
   async createItem(itemData) {
     return this.apiCall('/items/', {
       method: 'POST',
-      body: JSON.stringify(itemData)
+      body: JSON.stringify(itemData),
     });
   }
 
   async updateItem(itemId, itemData) {
     return this.apiCall(`/items/${itemId}`, {
       method: 'PUT',
-      body: JSON.stringify(itemData)
+      body: JSON.stringify(itemData),
     });
   }
 
   async deleteItem(itemId) {
     return this.apiCall(`/items/${itemId}`, {
-      method: 'DELETE'
+      method: 'DELETE',
     });
   }
 
@@ -121,20 +122,20 @@ class ApiService {
   async createCategory(categoryData) {
     return this.apiCall('/categories/', {
       method: 'POST',
-      body: JSON.stringify(categoryData)
+      body: JSON.stringify(categoryData),
     });
   }
 
   async updateCategory(categoryId, categoryData) {
     return this.apiCall(`/categories/${categoryId}`, {
       method: 'PUT',
-      body: JSON.stringify(categoryData)
+      body: JSON.stringify(categoryData),
     });
   }
 
   async deleteCategory(categoryId) {
     return this.apiCall(`/categories/${categoryId}`, {
-      method: 'DELETE'
+      method: 'DELETE',
     });
   }
 
@@ -146,7 +147,7 @@ class ApiService {
   async createStockMovement(movementData) {
     return this.apiCall('/stock/movement', {
       method: 'POST',
-      body: JSON.stringify(movementData)
+      body: JSON.stringify(movementData),
     });
   }
 
@@ -167,20 +168,20 @@ class ApiService {
   async createAlert(alertData) {
     return this.apiCall('/alerts/', {
       method: 'POST',
-      body: JSON.stringify(alertData)
+      body: JSON.stringify(alertData),
     });
   }
 
   async updateAlert(alertId, alertData) {
     return this.apiCall(`/alerts/${alertId}`, {
       method: 'PUT',
-      body: JSON.stringify(alertData)
+      body: JSON.stringify(alertData),
     });
   }
 
   async deleteAlert(alertId) {
     return this.apiCall(`/alerts/${alertId}`, {
-      method: 'DELETE'
+      method: 'DELETE',
     });
   }
 
@@ -197,26 +198,26 @@ class ApiService {
   async createPurchase(purchaseData) {
     return this.apiCall('/purchases/', {
       method: 'POST',
-      body: JSON.stringify(purchaseData)
+      body: JSON.stringify(purchaseData),
     });
   }
 
   async updatePurchase(purchaseId, purchaseData) {
     return this.apiCall(`/purchases/${purchaseId}`, {
       method: 'PUT',
-      body: JSON.stringify(purchaseData)
+      body: JSON.stringify(purchaseData),
     });
   }
 
   async makePurchasePayment(purchaseId, amount) {
     return this.apiCall(`/purchases/${purchaseId}/pay?amount=${amount}`, {
-      method: 'PUT'
+      method: 'PUT',
     });
   }
 
   async deletePurchase(purchaseId) {
     return this.apiCall(`/purchases/${purchaseId}`, {
-      method: 'DELETE'
+      method: 'DELETE',
     });
   }
 
@@ -237,20 +238,20 @@ class ApiService {
   async createSalesInvoice(invoiceData) {
     return this.apiCall('/sales-invoices/', {
       method: 'POST',
-      body: JSON.stringify(invoiceData)
+      body: JSON.stringify(invoiceData),
     });
   }
 
   async updateSalesInvoice(invoiceId, invoiceData) {
     return this.apiCall(`/sales-invoices/${invoiceId}`, {
       method: 'PUT',
-      body: JSON.stringify(invoiceData)
+      body: JSON.stringify(invoiceData),
     });
   }
 
   async deleteSalesInvoice(invoiceId) {
     return this.apiCall(`/sales-invoices/${invoiceId}`, {
-      method: 'DELETE'
+      method: 'DELETE',
     });
   }
 
@@ -267,27 +268,27 @@ class ApiService {
   async createInstallmentSale(saleData) {
     return this.apiCall('/installment-sales/', {
       method: 'POST',
-      body: JSON.stringify(saleData)
+      body: JSON.stringify(saleData),
     });
   }
 
   async updateInstallmentSale(saleId, saleData) {
     return this.apiCall(`/installment-sales/${saleId}`, {
       method: 'PUT',
-      body: JSON.stringify(saleData)
+      body: JSON.stringify(saleData),
     });
   }
 
   async deleteInstallmentSale(saleId) {
     return this.apiCall(`/installment-sales/${saleId}`, {
-      method: 'DELETE'
+      method: 'DELETE',
     });
   }
 
   async createInstallmentSalePayment(saleId, paymentData) {
     return this.apiCall(`/installment-sales/${saleId}/payment`, {
       method: 'POST',
-      body: JSON.stringify(paymentData)
+      body: JSON.stringify(paymentData),
     });
   }
 
@@ -300,9 +301,12 @@ class ApiService {
   }
 
   async refundPayment(saleId, paymentId, reason = null) {
-    return this.apiCall(`/installment-sales/${saleId}/payments/${paymentId}/refund?reason=${reason || ''}`, {
-      method: 'POST'
-    });
+    return this.apiCall(
+      `/installment-sales/${saleId}/payments/${paymentId}/refund?reason=${reason || ''}`,
+      {
+        method: 'POST',
+      }
+    );
   }
 
   async exportPaymentHistory(saleId) {
@@ -339,31 +343,31 @@ class ApiService {
 
   async checkDuePayments() {
     return this.apiCall('/notifications/check-due-payments', {
-      method: 'POST'
+      method: 'POST',
     });
   }
 
   async checkOverduePayments() {
     return this.apiCall('/notifications/check-overdue-payments', {
-      method: 'POST'
+      method: 'POST',
     });
   }
 
   async markNotificationAsRead(notificationId) {
     return this.apiCall(`/notifications/${notificationId}/read`, {
-      method: 'PUT'
+      method: 'PUT',
     });
   }
 
   async markAllNotificationsAsRead() {
     return this.apiCall('/notifications/read-all', {
-      method: 'PUT'
+      method: 'PUT',
     });
   }
 
   async deleteNotification(notificationId) {
     return this.apiCall(`/notifications/${notificationId}`, {
-      method: 'DELETE'
+      method: 'DELETE',
     });
   }
 
@@ -376,7 +380,7 @@ class ApiService {
     const response = await fetch(url, {
       method: 'POST',
       headers: this.getAuthHeaders(), // Note: Don't set Content-Type for FormData
-      body: formData
+      body: formData,
     });
 
     if (response.status === 401) {

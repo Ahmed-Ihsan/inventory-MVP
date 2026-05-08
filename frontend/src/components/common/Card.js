@@ -1,4 +1,6 @@
 import React from 'react';
+import { Card as UiCard, CardHeader, CardContent, CardFooter, CardTitle } from '../ui/card';
+import { cn } from '../../lib/utils';
 
 const Card = ({
   children,
@@ -6,27 +8,21 @@ const Card = ({
   style = {},
   header = null,
   footer = null,
-  hoverable = false
+  hoverable = false,
 }) => {
   return (
-    <div
-      className={`card ${hoverable ? 'card-hoverable' : ''} ${className}`}
+    <UiCard
+      className={cn(hoverable && 'hover:shadow-md', className)}
       style={style}
     >
       {header && (
-        <div className="card-header">
-          {typeof header === 'string' ? <h3>{header}</h3> : header}
-        </div>
+        <CardHeader className="pb-3">
+          {typeof header === 'string' ? <CardTitle>{header}</CardTitle> : header}
+        </CardHeader>
       )}
-      <div className="card-body">
-        {children}
-      </div>
-      {footer && (
-        <div className="card-footer">
-          {footer}
-        </div>
-      )}
-    </div>
+      <CardContent className={cn(!header && 'pt-6')}>{children}</CardContent>
+      {footer && <CardFooter className="pt-0">{footer}</CardFooter>}
+    </UiCard>
   );
 };
 

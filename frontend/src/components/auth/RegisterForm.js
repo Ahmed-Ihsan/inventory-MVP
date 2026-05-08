@@ -14,8 +14,8 @@ const RegisterForm = ({ onRegister }) => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-    if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    if (errors[name]) setErrors((prev) => ({ ...prev, [name]: '' }));
   };
 
   const handleSubmit = async (e) => {
@@ -23,10 +23,15 @@ const RegisterForm = ({ onRegister }) => {
     const newErrors = {};
     if (!formData.username.trim()) newErrors.username = 'اسم المستخدم مطلوب';
     if (!formData.email.trim()) newErrors.email = 'البريد الإلكتروني مطلوب';
-    else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'صيغة البريد الإلكتروني غير صحيحة';
+    else if (!/\S+@\S+\.\S+/.test(formData.email))
+      newErrors.email = 'صيغة البريد الإلكتروني غير صحيحة';
     if (!formData.password) newErrors.password = 'كلمة المرور مطلوبة';
-    else if (formData.password.length < 6) newErrors.password = 'يجب أن تكون كلمة المرور 6 أحرف على الأقل';
-    if (Object.keys(newErrors).length) { setErrors(newErrors); return; }
+    else if (formData.password.length < 6)
+      newErrors.password = 'يجب أن تكون كلمة المرور 6 أحرف على الأقل';
+    if (Object.keys(newErrors).length) {
+      setErrors(newErrors);
+      return;
+    }
 
     setIsSubmitting(true);
     try {
@@ -81,7 +86,13 @@ const RegisterForm = ({ onRegister }) => {
         help="يجب أن تحتوي على 6 أحرف على الأقل"
       />
 
-      <Button type="submit" className="btn-accent" fullWidth loading={isSubmitting} style={{ marginTop: '1rem' }}>
+      <Button
+        type="submit"
+        className="btn-accent"
+        fullWidth
+        loading={isSubmitting}
+        style={{ marginTop: '1rem' }}
+      >
         {t('auth.registerButton')}
       </Button>
     </form>

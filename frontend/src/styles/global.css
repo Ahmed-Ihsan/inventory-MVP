@@ -1,19 +1,15 @@
-/* ---------------------------------------------------------------
-   Premium Design System � Pharmaceutical Inventory Management
-   Professional Navy + Teal + Gold enterprise palette
-   --------------------------------------------------------------- */
+/* ───────────────────────────────────────────────────────────────
+   GLOBAL CSS IMPORTS
+   Legacy design tokens — used by page components.
+   New layout components use Tailwind utility classes.
+   ─────────────────────────────────────────────────────────────── */
 
-/* Import CSS modules in logical order */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Syne:wght@600;700;800&display=swap');
 
 @import './variables.css';
 @import './reset.css';
+@import './animations.css';
 @import './layout.css';
 @import './components.css';
 @import './dashboard.css';
-@import './animations.css';
-@import './utilities.css';
 @import './auth.css';
-@import './quick-entry.css';
-@import './enhanced-data-entry.css';
-@import './responsive.css';

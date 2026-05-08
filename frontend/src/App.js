@@ -36,7 +36,7 @@ const QuickEntryWizard = lazy(() => import('./components/quickentry/QuickEntryWi
 function App() {
   const { i18n } = useTranslation();
   const [quickEntryOpen, setQuickEntryOpen] = useState(false);
-  
+
   const handleOpenQuickEntry = () => setQuickEntryOpen(true);
   const handleCloseQuickEntry = () => setQuickEntryOpen(false);
 
@@ -50,40 +50,140 @@ function App() {
               v7_relativeSplatPath: true,
             }}
           >
-          <div className="app" dir={i18n.language === 'ar' ? 'rtl' : 'ltr'}>
-            <Header onOpenQuickEntry={handleOpenQuickEntry} />
-            <div className="main">
-              <Sidebar />
-              <div className="content">
-                <Breadcrumbs />
+            <div className="min-h-dvh flex flex-col bg-background text-foreground" dir={i18n.language === 'ar' ? 'rtl' : 'ltr'}>
+              <Header onOpenQuickEntry={handleOpenQuickEntry} />
+              <div className="flex flex-1 min-h-0">
+                <Sidebar />
+                <main className="flex-1 overflow-x-hidden min-w-0 p-6 bg-background">
+                  <div className="max-w-[1400px] mx-auto">
+                  <Breadcrumbs />
                   <Suspense fallback={<Loading />}>
                     <Routes>
                       <Route path="/login" element={<Login />} />
-                      <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-                      <Route path="/purchases" element={<ProtectedRoute><Purchases /></ProtectedRoute>} />
-                      <Route path="/sales-invoice" element={<ProtectedRoute><SalesInvoice /></ProtectedRoute>} />
-                      <Route path="/quick-invoice" element={<ProtectedRoute><QuickInvoice /></ProtectedRoute>} />
-                      <Route path="/installment-sales" element={<ProtectedRoute><InstallmentSales /></ProtectedRoute>} />
-                      <Route path="/installment-sales/list" element={<ProtectedRoute><InstallmentSalesList /></ProtectedRoute>} />
-                      <Route path="/items" element={<ProtectedRoute><ItemCatalog /></ProtectedRoute>} />
-                      <Route path="/items/new" element={<ProtectedRoute><AddItem /></ProtectedRoute>} />
-                      <Route path="/items/edit/:id" element={<ProtectedRoute><EditItem /></ProtectedRoute>} />
-                      <Route path="/categories" element={<ProtectedRoute><Categories /></ProtectedRoute>} />
-                      <Route path="/stock" element={<ProtectedRoute><Stock /></ProtectedRoute>} />
-                      <Route path="/alerts" element={<ProtectedRoute><Alerts /></ProtectedRoute>} />
-                      <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
-                      <Route path="/scan" element={<ProtectedRoute><Scanning /></ProtectedRoute>} />
+                      <Route
+                        path="/"
+                        element={
+                          <ProtectedRoute>
+                            <Dashboard />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/purchases"
+                        element={
+                          <ProtectedRoute>
+                            <Purchases />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/sales-invoice"
+                        element={
+                          <ProtectedRoute>
+                            <SalesInvoice />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/quick-invoice"
+                        element={
+                          <ProtectedRoute>
+                            <QuickInvoice />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/installment-sales"
+                        element={
+                          <ProtectedRoute>
+                            <InstallmentSales />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/installment-sales/list"
+                        element={
+                          <ProtectedRoute>
+                            <InstallmentSalesList />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/items"
+                        element={
+                          <ProtectedRoute>
+                            <ItemCatalog />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/items/new"
+                        element={
+                          <ProtectedRoute>
+                            <AddItem />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/items/edit/:id"
+                        element={
+                          <ProtectedRoute>
+                            <EditItem />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/categories"
+                        element={
+                          <ProtectedRoute>
+                            <Categories />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/stock"
+                        element={
+                          <ProtectedRoute>
+                            <Stock />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/alerts"
+                        element={
+                          <ProtectedRoute>
+                            <Alerts />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/notifications"
+                        element={
+                          <ProtectedRoute>
+                            <Notifications />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/scan"
+                        element={
+                          <ProtectedRoute>
+                            <Scanning />
+                          </ProtectedRoute>
+                        }
+                      />
                     </Routes>
                   </Suspense>
+                  </div>
+                </main>
               </div>
+              <Footer />
+              <QuickEntryWizard
+                isOpen={quickEntryOpen}
+                onClose={handleCloseQuickEntry}
+                onOpen={handleOpenQuickEntry}
+              />
             </div>
-            <Footer />
-            <QuickEntryWizard 
-              isOpen={quickEntryOpen} 
-              onClose={handleCloseQuickEntry} 
-              onOpen={handleOpenQuickEntry} 
-            />
-          </div>
           </Router>
         </AuthProvider>
       </ToastProvider>

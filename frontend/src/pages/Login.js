@@ -5,13 +5,15 @@ import { useAuthContext } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import LoginForm from '../components/auth/LoginForm';
 import RegisterForm from '../components/auth/RegisterForm';
+import { Card, CardHeader, CardContent, CardFooter, CardTitle, CardDescription } from '../components/ui/card';
+import { Button } from '../components/ui/button';
 import { FaBoxes, FaChartLine, FaMoneyBillWave, FaShieldAlt } from 'react-icons/fa';
 
 const FEATURES = [
-  { icon: FaBoxes,          text: 'إدارة المخزون والأصناف بكفاءة عالية' },
-  { icon: FaChartLine,      text: 'تتبع المبيعات والمشتريات لحظةً بلحظة' },
-  { icon: FaMoneyBillWave,  text: 'متابعة الديون والمدفوعات بدقة' },
-  { icon: FaShieldAlt,      text: 'بيانات آمنة ومحمية بالكامل' },
+  { icon: FaBoxes, text: 'auth.manageInventory' },
+  { icon: FaChartLine, text: 'auth.trackSales' },
+  { icon: FaMoneyBillWave, text: 'auth.trackDebts' },
+  { icon: FaShieldAlt, text: 'auth.secureData' },
 ];
 
 const Login = () => {
@@ -32,65 +34,75 @@ const Login = () => {
   };
 
   return (
-    <div className="auth-page">
-      {/* ── Brand panel ── */}
-      <div className="auth-brand-panel">
-        <div className="auth-brand-logo-wrap">
-          <div className="auth-brand-logo-mark">IM</div>
-          <div className="auth-brand-name">
-            نظام إدارة المخزون
-            <small>Inventory Management System</small>
+    <div className="min-h-dvh flex">
+      {/* Brand panel */}
+      <div className="hidden lg:flex flex-col justify-center w-1/2 bg-primary text-primary-foreground p-12">
+        <div className="flex items-center gap-3 mb-10">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-foreground/10 font-semibold text-sm">
+            IM
+          </div>
+          <div>
+            <p className="font-semibold text-base leading-tight">{t('auth.brandName')}</p>
+            <p className="text-xs text-primary-foreground/70">{t('auth.brandSubtitle')}</p>
           </div>
         </div>
 
-        <h1 className="auth-brand-headline">
-          أدِر مخزونك<br /><span>بكل سهولة</span>
+        <h1 className="text-4xl font-bold leading-tight text-balance mb-4">
+          {t('auth.heroTitle')}
+          <br />
+          <span className="text-primary-foreground/70">{t('auth.heroSubtitle')}</span>
         </h1>
-        <p className="auth-brand-desc">
-          منصة متكاملة لإدارة المخزون، المشتريات، والمدفوعات — مصممة لتوفير وقتك وتنظيم أعمالك.
+        <p className="text-primary-foreground/90 text-sm text-pretty mb-10 max-w-sm">
+          {t('auth.heroDescription')}
         </p>
 
-        <div className="auth-features-list">
+        <ul className="space-y-4">
           {FEATURES.map(({ icon: Icon, text }) => (
-            <div className="auth-feature-item" key={text}>
-              <div className="auth-feature-icon"><Icon /></div>
-              <span className="auth-feature-text">{text}</span>
-            </div>
+            <li key={text} className="flex items-center gap-3">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary-foreground/10">
+                <Icon size={14} aria-hidden="true" />
+              </div>
+              <span className="text-sm text-primary-foreground/95">{t(text)}</span>
+            </li>
           ))}
-        </div>
+        </ul>
       </div>
 
-      {/* ── Form panel ── */}
-      <div className="auth-form-panel">
-        <div className="auth-form-card">
-          <div className="auth-form-header">
-            <div className="auth-form-logo">IM</div>
-            <h2 className="auth-form-title">
+      {/* Form panel */}
+      <div className="flex flex-1 items-center justify-center p-6 bg-background">
+        <Card className="w-full max-w-md border-border/50 shadow-sm">
+          <CardHeader className="text-center space-y-2">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground font-semibold text-sm mx-auto">
+              IM
+            </div>
+            <CardTitle className="text-xl">
               {isRegistering ? t('auth.register') : t('auth.login')}
-            </h2>
-            <p className="auth-form-subtitle">
-              {isRegistering
-                ? 'أنشئ حسابك للبدء في إدارة مخزونك'
-                : 'مرحباً بك! سجّل دخولك للمتابعة'}
-            </p>
-          </div>
+            </CardTitle>
+            <CardDescription className="text-sm">
+              {isRegistering ? t('auth.createAccountSubtitle') : t('auth.welcomeBackSubtitle')}
+            </CardDescription>
+          </CardHeader>
 
-          {isRegistering
-            ? <RegisterForm onRegister={handleRegister} />
-            : <LoginForm onLogin={handleLogin} />
-          }
+          <CardContent>
+            {isRegistering ? (
+              <RegisterForm onRegister={handleRegister} />
+            ) : (
+              <LoginForm onLogin={handleLogin} />
+            )}
+          </CardContent>
 
-          <div className="auth-form-footer">
-            {isRegistering ? 'لديك حساب بالفعل؟' : 'ليس لديك حساب؟'}
-            {' '}
-            <button
-              className="auth-toggle-btn"
+          <CardFooter className="flex justify-center gap-1 text-sm text-muted-foreground">
+            <span>{isRegistering ? t('auth.haveAccount') : t('auth.noAccount')}</span>
+            <Button
+              variant="link"
+              size="sm"
+              className="p-0 h-auto font-medium"
               onClick={() => setIsRegistering((v) => !v)}
             >
               {isRegistering ? t('auth.alreadyHaveAccount') : t('auth.needAccount')}
-            </button>
-          </div>
-        </div>
+            </Button>
+          </CardFooter>
+        </Card>
       </div>
     </div>
   );

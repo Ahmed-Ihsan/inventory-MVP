@@ -3,14 +3,20 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import Button from '../common/Button';
 import {
-  FaCreditCard, FaBell, FaClock,
-  FaPlus, FaExclamationTriangle, FaFileAlt,
+  FaCreditCard,
+  FaBell,
+  FaClock,
+  FaPlus,
+  FaExclamationTriangle,
+  FaFileAlt,
 } from 'react-icons/fa';
 import apiService from '../../services/apiService';
+import { Card as ShadcnCard, CardContent } from '../ui/card';
+import { cn } from '../../lib/utils';
 
 const relativeTime = (dateStr) => {
   const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
-  if (diff < 60)   return 'منذ لحظات';
+  if (diff < 60) return 'منذ لحظات';
   if (diff < 3600) return `منذ ${Math.floor(diff / 60)} دقيقة`;
   if (diff < 86400) return `منذ ${Math.floor(diff / 3600)} ساعة`;
   return `منذ ${Math.floor(diff / 86400)} يوم`;
@@ -32,7 +38,9 @@ const FinancialSummary = ({ formatCurrency }) => {
 
         // Activity log: last 5 stock movements with item names
         const itemMap = {};
-        stockLevels.forEach(i => { itemMap[i.id] = i.name; });
+        stockLevels.forEach((i) => {
+          itemMap[i.id] = i.name;
+        });
         const recentMoves = [...movements]
           .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
           .slice(0, 5)
@@ -53,60 +61,60 @@ const FinancialSummary = ({ formatCurrency }) => {
   }, []);
 
   return (
-    <div className="dashboard-financials-row">
-      {/* Quick actions + Activity log */}
-      <div className="dashboard-card">
-        <div className="card-section-header">
-          <div className="card-section-icon" style={{ background: 'var(--color-primary-50)', color: 'var(--color-primary)' }}>
-            <FaBell />
+    <ShadcnCard className="border-border/60 shadow-lg shadow-black/5">
+      <CardContent className="p-3 sm:p-4">
+        <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+          <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+            <FaBell style={{ fontSize: '14px' }} className="sm:text-[16px]" />
           </div>
-          <h3 className="card-section-title">{t('dashboard.financials.quickActions')}</h3>
+          <h3 className="text-xs sm:text-sm font-bold text-foreground">{t('dashboard.financials.quickActions')}</h3>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.625rem', marginBottom: '1.5rem' }}>
-          <Button className="btn-primary" onClick={() => navigate('/items/new')}>
-            <FaPlus size={13} />
+        <div className="grid grid-cols-2 gap-2 sm:gap-2.5 mb-4 sm:mb-6">
+          <Button onClick={() => navigate('/items/new')} className="text-[10px] sm:text-xs">
+            <FaPlus style={{ fontSize: '12px' }} className="sm:text-[13px] mr-1" />
             {t('dashboard.financials.addNewDrug')}
           </Button>
-          <Button className="btn-success" onClick={() => navigate('/payments')}>
-            <FaCreditCard size={13} />
-            {t('dashboard.financials.recordPayment')}
-          </Button>
-          <Button className="btn-warning" onClick={() => navigate('/stock')}>
-            <FaExclamationTriangle size={13} />
+          <Button onClick={() => navigate('/stock')} variant="warning" className="text-[10px] sm:text-xs">
+            <FaExclamationTriangle style={{ fontSize: '12px' }} className="sm:text-[13px] mr-1" />
             {t('dashboard.financials.viewAlerts')}
           </Button>
-          <Button className="btn-secondary" onClick={() => window.print()}>
-            <FaFileAlt size={13} />
+          <Button onClick={() => window.print()} variant="outline" className="text-[10px] sm:text-xs col-span-2">
+            <FaFileAlt style={{ fontSize: '12px' }} className="sm:text-[13px] mr-1" />
             {t('dashboard.financials.generateReport')}
           </Button>
         </div>
 
-        <div style={{ borderTop: '1px solid var(--color-border-light)', paddingTop: '1.25rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.875rem' }}>
-            <FaClock style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem' }} />
-            <h4 style={{ margin: 0, fontSize: '0.9375rem', fontWeight: 700, color: 'var(--color-text)' }}>
+        <div className="border-t border-border pt-4 sm:pt-5">
+          <div className="flex items-center gap-2 mb-2 sm:mb-3.5">
+            <FaClock className="text-muted-foreground text-xs sm:text-sm" />
+            <h4 className="text-sm sm:text-base font-bold text-foreground">
               {t('dashboard.financials.activityLog')}
             </h4>
           </div>
           {loading ? (
-            <div style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem' }}>...</div>
+            <div className="text-xs sm:text-sm text-muted-foreground">...</div>
           ) : activityLog.length === 0 ? (
-            <div style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem', textAlign: 'center', padding: '1rem 0' }}>
+            <div className="text-xs sm:text-sm text-muted-foreground text-center py-3 sm:py-4">
               لا توجد حركات مخزون
             </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <div className="flex flex-col gap-1.5 sm:gap-2">
               {activityLog.map((entry) => (
-                <div key={entry.id} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.625rem 0.875rem', background: 'var(--color-surface)', borderRadius: 'var(--border-radius-md)', border: '1px solid var(--color-border-light)' }}>
-                  <span style={{
-                    width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
-                    background: entry.positive ? 'var(--color-success)' : 'var(--color-warning)',
-                  }} />
-                  <span style={{ flex: 1, fontSize: '0.8375rem', color: 'var(--color-text-secondary)' }}>
+                <div
+                  key={entry.id}
+                  className="flex items-center gap-2 sm:gap-3 p-2 sm:p-2.5 bg-muted rounded-lg border border-border"
+                >
+                  <span
+                    className={cn(
+                      'w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full shrink-0',
+                      entry.positive ? 'bg-emerald-600' : 'bg-amber-600'
+                    )}
+                  />
+                  <span className="flex-1 text-[10px] sm:text-xs text-secondary-foreground truncate">
                     {entry.text}
                   </span>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', flexShrink: 0 }}>
+                  <span className="text-[10px] sm:text-xs text-muted-foreground shrink-0">
                     {entry.time}
                   </span>
                 </div>
@@ -114,8 +122,8 @@ const FinancialSummary = ({ formatCurrency }) => {
             </div>
           )}
         </div>
-      </div>
-    </div>
+      </CardContent>
+    </ShadcnCard>
   );
 };
 

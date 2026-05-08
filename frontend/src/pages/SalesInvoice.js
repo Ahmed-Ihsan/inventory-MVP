@@ -1,9 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import apiService from '../services/apiService';
-import { FaPlus, FaReceipt, FaEdit, FaBolt } from 'react-icons/fa';
+import { FaPlus, FaReceipt, FaEdit, FaBolt, FaTimes, FaPrint } from 'react-icons/fa';
 import { useToast } from '../context/ToastContext';
+import { Card as ShadcnCard, CardContent } from '../components/ui/card';
+import { Button } from '../components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog';
+import { cn } from '../lib/utils';
 
 const SalesInvoice = () => {
   const { t, i18n } = useTranslation();
@@ -17,14 +21,23 @@ const SalesInvoice = () => {
   const [formData, setFormData] = useState({
     customer_name: '',
     customer_phone: '',
-    items: [{ item_id: '', item_name: '', quantity: 1, cost_price: 0, selling_price: 0, profit_margin: 0 }],
+    items: [
+      {
+        item_id: '',
+        item_name: '',
+        quantity: 1,
+        cost_price: 0,
+        selling_price: 0,
+        profit_margin: 0,
+      },
+    ],
     total_amount: 0,
     paid_amount: 0,
     payment_method: 'cash',
     notes: '',
   });
 
-  const loadInvoices = async () => {
+  const loadInvoices = useCallback(async () => {
     try {
       setLoading(true);
       const [invoicesData, itemsData] = await Promise.all([
@@ -38,18 +51,27 @@ const SalesInvoice = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [addToast, t]);
 
   useEffect(() => {
     loadInvoices();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [loadInvoices]);
 
   const handleAddInvoice = () => {
     setEditingInvoice(null);
     setFormData({
       customer_name: '',
       customer_phone: '',
-      items: [{ item_id: '', item_name: '', quantity: 1, cost_price: 0, selling_price: 0, profit_margin: 0 }],
+      items: [
+        {
+          item_id: '',
+          item_name: '',
+          quantity: 1,
+          cost_price: 0,
+          selling_price: 0,
+          profit_margin: 0,
+        },
+      ],
       total_amount: 0,
       paid_amount: 0,
       payment_method: 'cash',
@@ -63,7 +85,19 @@ const SalesInvoice = () => {
     setFormData({
       customer_name: invoice.customer_name,
       customer_phone: invoice.customer_phone,
-      items: invoice.items && invoice.items.length > 0 ? invoice.items : [{ item_id: '', item_name: '', quantity: 1, cost_price: 0, selling_price: 0, profit_margin: 0 }],
+      items:
+        invoice.items && invoice.items.length > 0
+          ? invoice.items
+          : [
+              {
+                item_id: '',
+                item_name: '',
+                quantity: 1,
+                cost_price: 0,
+                selling_price: 0,
+                profit_margin: 0,
+              },
+            ],
       total_amount: invoice.total_amount,
       paid_amount: invoice.paid_amount,
       payment_method: invoice.payment_method,
@@ -111,16 +145,108 @@ const SalesInvoice = () => {
     }).format(amount);
   };
 
+  const handlePrintInvoice = (invoice) => {
+    const printContent = `
+      <html dir="${i18n.language === 'ar' ? 'rtl' : 'ltr'}">
+      <head>
+        <title>Invoice #${invoice.id}</title>
+        <style>
+          body { font-family: Arial, sans-serif; padding: 20px; }
+          .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #10b981; padding-bottom: 10px; }
+          .invoice-title { font-size: 24px; font-weight: bold; color: #10b981; }
+          .invoice-info { margin: 10px 0; }
+          .customer-info { background: #f5f5f5; padding: 15px; margin: 15px 0; border-radius: 8px; }
+          .items-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+          .items-table th, .items-table td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+          .items-table th { background: #10b981; color: white; }
+          .totals { text-align: right; margin-top: 20px; }
+          .total-row { font-size: 18px; font-weight: bold; margin: 5px 0; }
+          .status { padding: 5px 15px; border-radius: 20px; display: inline-block; margin-top: 10px; }
+          .paid { background: #10b981; color: white; }
+          .partial { background: #f59e0b; color: white; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div class="invoice-title">فاتورة مبيعات #${invoice.id}</div>
+          <div class="invoice-info">التاريخ: ${new Date(invoice.created_at).toLocaleDateString(i18n.language === 'ar' ? 'ar-SA' : 'en-US')}</div>
+        </div>
+        <div class="customer-info">
+          <strong>العميل:</strong> ${invoice.customer_name}<br>
+          ${invoice.customer_phone ? `<strong>الهاتف:</strong> ${invoice.customer_phone}<br>` : ''}
+        </div>
+        <table class="items-table">
+          <thead>
+            <tr>
+              <th>الصنف</th>
+              <th>الكمية</th>
+              <th>سعر البيع</th>
+              <th>الإجمالي</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${invoice.items && invoice.items.length > 0 ? invoice.items.map(item => `
+              <tr>
+                <td>${item.item_name}</td>
+                <td>${item.quantity}</td>
+                <td>${formatCurrency(item.selling_price)}</td>
+                <td>${formatCurrency(item.selling_price * item.quantity)}</td>
+              </tr>
+            `).join('') : '<tr><td colspan="4">لا توجد أصناف</td></tr>'}
+          </tbody>
+        </table>
+        <div class="totals">
+          <div class="total-row">الإجمالي: ${formatCurrency(invoice.total_amount)}</div>
+          <div class="total-row">المدفوع: ${formatCurrency(invoice.paid_amount)}</div>
+          <div class="total-row">المتبقي: ${formatCurrency(invoice.total_amount - invoice.paid_amount)}</div>
+          <div class="status ${invoice.paid_amount >= invoice.total_amount ? 'paid' : 'partial'}">
+            ${invoice.paid_amount >= invoice.total_amount ? 'مدفوع بالكامل' : 'مدفوع جزئياً'}
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(printContent);
+    printWindow.document.close();
+    printWindow.print();
+  };
+
   const addItem = () => {
     setFormData({
       ...formData,
-      items: [...formData.items, { item_id: '', item_name: '', quantity: 1, cost_price: 0, selling_price: 0, profit_margin: 0 }]
+      items: [
+        ...formData.items,
+        {
+          item_id: '',
+          item_name: '',
+          quantity: 1,
+          cost_price: 0,
+          selling_price: 0,
+          profit_margin: 0,
+        },
+      ],
     });
   };
 
   const removeItem = (index) => {
     const newItems = formData.items.filter((_, i) => i !== index);
-    setFormData({ ...formData, items: newItems.length > 0 ? newItems : [{ item_id: '', item_name: '', quantity: 1, cost_price: 0, selling_price: 0, profit_margin: 0 }] });
+    setFormData({
+      ...formData,
+      items:
+        newItems.length > 0
+          ? newItems
+          : [
+              {
+                item_id: '',
+                item_name: '',
+                quantity: 1,
+                cost_price: 0,
+                selling_price: 0,
+                profit_margin: 0,
+              },
+            ],
+    });
   };
 
   const updateItem = (index, field, value) => {
@@ -131,13 +257,14 @@ const SalesInvoice = () => {
     if (field === 'cost_price' || field === 'selling_price') {
       const costPrice = parseFloat(newItems[index].cost_price) || 0;
       const sellingPrice = parseFloat(newItems[index].selling_price) || 0;
-      const margin = sellingPrice > 0 ? ((sellingPrice - costPrice) / sellingPrice * 100).toFixed(2) : 0;
+      const margin =
+        sellingPrice > 0 ? (((sellingPrice - costPrice) / sellingPrice) * 100).toFixed(2) : 0;
       newItems[index].profit_margin = parseFloat(margin);
     }
 
     // Auto-select item name when item_id is selected
     if (field === 'item_id') {
-      const selectedItem = items.find(i => String(i.id) === String(value));
+      const selectedItem = items.find((i) => String(i.id) === String(value));
       if (selectedItem) {
         newItems[index].item_name = selectedItem.name;
         newItems[index].cost_price = selectedItem.price || 0;
@@ -148,143 +275,270 @@ const SalesInvoice = () => {
   };
 
   return (
-    <div className="page">
+    <div className="space-y-4 sm:space-y-6">
+      {/* Page header with gradient */}
+      <div className="relative overflow-hidden rounded-2xl p-4 sm:p-6 md:p-8 mb-4 sm:mb-6 shadow-lg" style={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)' }}>
+        {/* Decorative circles */}
+        <div className="absolute top-0 right-0 w-48 h-48 rounded-full bg-white/10 -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-32 h-32 rounded-full bg-white/8 translate-y-1/2 -translate-x-1/2 pointer-events-none" />
 
-      {/* ── Hero Header ── */}
-      <div style={{
-        background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-        borderRadius: '20px',
-        padding: 'clamp(1.5rem, 4vw, 2.5rem)',
-        marginBottom: '1.75rem',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        flexWrap: 'wrap',
-        gap: '1rem',
-        boxShadow: '0 8px 32px rgba(16,185,129,0.28)',
-        position: 'relative',
-        overflow: 'hidden',
-      }}>
-        <div style={{ position: 'absolute', top: -50, right: -50, width: 200, height: 200, borderRadius: '50%', background: 'rgba(255,255,255,0.06)', pointerEvents: 'none' }} />
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
-          <div style={{ width: 56, height: 56, borderRadius: '16px', background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', color: '#fff', backdropFilter: 'blur(8px)', flexShrink: 0 }}>
-            <FaReceipt />
-          </div>
-          <div>
-            <h1 style={{ margin: 0, color: '#fff', fontSize: 'clamp(1.25rem,3vw,1.75rem)', fontWeight: 800, letterSpacing: '-0.02em' }}>{t('salesInvoice.title')}</h1>
-            <p style={{ margin: 0, color: 'rgba(255,255,255,0.8)', fontSize: '0.9rem', marginTop: '0.25rem' }}>
-              {invoices.length} فاتورة · {t('salesInvoice.subtitle')}
-            </p>
-          </div>
-        </div>
-        <div style={{ display: 'flex', gap: '0.75rem' }}>
-          <button 
-            onClick={() => navigate('/quick-invoice')} 
-            style={{ 
-              background: 'rgba(255,255,255,0.15)', 
-              border: '1px solid rgba(255,255,255,0.3)', 
-              color: '#fff', 
-              padding: '0.6rem 1.2rem', 
-              borderRadius: '10px', 
-              cursor: 'pointer', 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: '0.5rem', 
-              fontWeight: 600, 
-              backdropFilter: 'blur(4px)', 
-              fontSize: '0.875rem',
-            }}
-          >
-            <FaBolt size={13} /> فاتورة سريعة
-          </button>
-          <button onClick={handleAddInvoice} style={{ background: '#fff', border: 'none', color: '#10b981', padding: '0.6rem 1.4rem', borderRadius: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 700, fontSize: '0.875rem', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-            <FaPlus size={13} /> {t('salesInvoice.newInvoice')}
-          </button>
-        </div>
-      </div>
-
-      {/* ── Stats Cards ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '1.75rem' }}>
-        {[
-          { label: 'إجمالي الفواتير', value: invoices.length, color: '#10b981', bg: '#10b98115', icon: <FaReceipt /> },
-          { label: 'إجمالي المبيعات', value: formatCurrency(invoices.reduce((sum, inv) => sum + (inv.total_amount || 0), 0)), color: '#3b82f6', bg: '#3b82f615', icon: <FaPlus /> },
-          { label: 'المبلغ المدفوع', value: formatCurrency(invoices.reduce((sum, inv) => sum + (inv.paid_amount || 0), 0)), color: '#10b981', bg: '#10b98115', icon: <FaPlus /> },
-          { label: 'المتبقي', value: formatCurrency(invoices.reduce((sum, inv) => sum + ((inv.total_amount || 0) - (inv.paid_amount || 0)), 0)), color: '#ef4444', bg: '#ef444415', icon: <FaPlus /> },
-        ].map(({ label, value, color, bg, icon }) => (
-          <div key={label} style={{ background: 'var(--color-card-background)', borderRadius: '16px', padding: '1.25rem 1.5rem', border: '1px solid var(--color-border-light)', display: 'flex', alignItems: 'center', gap: '1rem', boxShadow: 'var(--shadow-card)' }}>
-            <div style={{ width: 44, height: 44, borderRadius: '12px', background: bg, color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem', flexShrink: 0 }}>{icon}</div>
-            <div>
-              <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--color-text-muted)', fontWeight: 500 }}>{label}</p>
-              <p style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, color }}>{value}</p>
+        <div className="relative flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-6">
+          <div className="flex items-center gap-3 sm:gap-5 w-full sm:w-auto">
+            <div className="flex h-12 w-12 sm:h-14 sm:w-14 md:h-16 md:w-16 shrink-0 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-sm text-white shadow-lg">
+              <FaReceipt size={24} className="sm:size-26 md:size-28" />
+            </div>
+            <div className="space-y-1">
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white drop-shadow-sm">
+                {t('salesInvoice.title')}
+              </h1>
+              <p className="text-sm sm:text-base text-white/90 font-medium">
+                {invoices.length} فاتورة · {t('salesInvoice.subtitle')}
+              </p>
             </div>
           </div>
-        ))}
+          <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto mt-2 sm:mt-0">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate('/quick-invoice')}
+              className="bg-white/15 hover:bg-white/25 text-white border-white/30 backdrop-blur-sm flex-1 sm:flex-none"
+            >
+              <FaBolt size={12} className="sm:size-13 mr-2" />
+              <span className="hidden sm:inline">فاتورة سريعة</span>
+            </Button>
+            <Button
+              size="sm"
+              onClick={handleAddInvoice}
+              className="bg-white text-emerald-600 hover:bg-white/90 font-semibold shadow-lg flex-1 sm:flex-none"
+            >
+              <FaPlus size={12} className="sm:size-13 mr-2" />
+              {t('salesInvoice.newInvoice')}
+            </Button>
+          </div>
+        </div>
       </div>
 
-      {/* ── Invoices Table ── */}
-      <div style={{ background: 'var(--color-card-background)', borderRadius: '20px', border: '1px solid var(--color-border-light)', boxShadow: 'var(--shadow-card)', overflow: 'hidden' }}>
+      {/* Summary Cards */}
+      {!loading && (
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5 mb-4 sm:mb-6">
+          <ShadcnCard className="group relative overflow-hidden border-border/60 shadow-lg shadow-black/5 hover:shadow-xl hover:shadow-emerald-500/10 transition-all duration-300">
+            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <CardContent className="relative p-3 sm:p-4 md:p-6">
+              <div className="flex items-center justify-between mb-2 sm:mb-4">
+                <span className="text-[10px] sm:text-xs md:text-sm font-semibold text-muted-foreground tracking-wide uppercase">
+                  إجمالي الفواتير
+                </span>
+                <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 ring-1 ring-emerald-500/20">
+                  <FaReceipt size={14} className="sm:size-18" />
+                </div>
+              </div>
+              <p className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-foreground drop-shadow-sm">
+                {invoices.length}
+              </p>
+              <p className="text-[10px] sm:text-xs md:text-sm text-muted-foreground mt-1">فاتورة مسجلة</p>
+            </CardContent>
+          </ShadcnCard>
+
+          <ShadcnCard className="group relative overflow-hidden border-border/60 shadow-lg shadow-black/5 hover:shadow-xl hover:shadow-blue-500/10 transition-all duration-300">
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <CardContent className="relative p-3 sm:p-4 md:p-6">
+              <div className="flex items-center justify-between mb-2 sm:mb-4">
+                <span className="text-[10px] sm:text-xs md:text-sm font-semibold text-muted-foreground tracking-wide uppercase">
+                  إجمالي المبيعات
+                </span>
+                <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-xl bg-blue-500/10 text-blue-600 ring-1 ring-blue-500/20">
+                  <FaPlus size={14} className="sm:size-18" />
+                </div>
+              </div>
+              <p className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-blue-600 dark:text-blue-400 drop-shadow-sm">
+                {formatCurrency(invoices.reduce((sum, inv) => sum + (inv.total_amount || 0), 0))}
+              </p>
+              <p className="text-[10px] sm:text-xs md:text-sm text-muted-foreground mt-1">إجمالي الإيرادات</p>
+            </CardContent>
+          </ShadcnCard>
+
+          <ShadcnCard className="group relative overflow-hidden border-border/60 shadow-lg shadow-black/5 hover:shadow-xl hover:shadow-emerald-500/10 transition-all duration-300">
+            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <CardContent className="relative p-3 sm:p-4 md:p-6">
+              <div className="flex items-center justify-between mb-2 sm:mb-4">
+                <span className="text-[10px] sm:text-xs md:text-sm font-semibold text-muted-foreground tracking-wide uppercase">
+                  المبلغ المدفوع
+                </span>
+                <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 ring-1 ring-emerald-500/20">
+                  <FaPlus size={14} className="sm:size-18" />
+                </div>
+              </div>
+              <p className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-emerald-600 dark:text-emerald-400 drop-shadow-sm">
+                {formatCurrency(invoices.reduce((sum, inv) => sum + (inv.paid_amount || 0), 0))}
+              </p>
+              <p className="text-[10px] sm:text-xs md:text-sm text-muted-foreground mt-1">تم تحصيله</p>
+            </CardContent>
+          </ShadcnCard>
+
+          <ShadcnCard className="group relative overflow-hidden border-border/60 shadow-lg shadow-black/5 hover:shadow-xl hover:shadow-red-500/10 transition-all duration-300">
+            <div className="absolute inset-0 bg-gradient-to-br from-red-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <CardContent className="relative p-3 sm:p-4 md:p-6">
+              <div className="flex items-center justify-between mb-2 sm:mb-4">
+                <span className="text-[10px] sm:text-xs md:text-sm font-semibold text-muted-foreground tracking-wide uppercase">
+                  المتبقي
+                </span>
+                <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-xl bg-red-500/10 text-red-600 ring-1 ring-red-500/20">
+                  <FaPlus size={14} className="sm:size-18" />
+                </div>
+              </div>
+              <p className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-red-600 dark:text-red-400 drop-shadow-sm">
+                {formatCurrency(
+                  invoices.reduce(
+                    (sum, inv) => sum + ((inv.total_amount || 0) - (inv.paid_amount || 0)),
+                    0
+                  )
+                )}
+              </p>
+              <p className="text-[10px] sm:text-xs md:text-sm text-muted-foreground mt-1">ديون معلقة</p>
+            </CardContent>
+          </ShadcnCard>
+        </div>
+      )}
+
+      {/* Invoices Table */}
+      <ShadcnCard className="border-border/60 shadow-lg shadow-black/5 overflow-hidden">
         {loading ? (
-          <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--color-text-muted)' }}>{t('common.loading')}</div>
+          <div className="text-center p-8 sm:p-12 text-muted-foreground text-xs sm:text-sm">
+            {t('common.loading')}
+          </div>
         ) : invoices.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '4rem' }}>
-            <div style={{ width: 72, height: 72, borderRadius: '18px', background: '#10b98112', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem', color: '#10b981', margin: '0 auto 1.25rem' }}><FaReceipt /></div>
-            <h3 style={{ color: 'var(--color-text)', margin: '0 0 0.5rem' }}>{t('salesInvoice.noInvoices')}</h3>
-            <p style={{ color: 'var(--color-text-muted)', margin: '0 0 1.5rem', fontSize: '0.9rem' }}>{t('salesInvoice.noInvoicesDesc')}</p>
-            <button onClick={handleAddInvoice} style={{ background: '#10b981', color: '#fff', border: 'none', padding: '0.6rem 1.5rem', borderRadius: '10px', cursor: 'pointer', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
-              <FaPlus size={12} /> {t('salesInvoice.newInvoice')}
-            </button>
+          <div className="text-center p-8 sm:p-16">
+            <div className="flex h-12 w-12 sm:h-16 sm:w-16 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 text-xl sm:text-2xl mx-auto mb-3 sm:mb-5">
+              <FaReceipt />
+            </div>
+            <h3 className="text-sm sm:text-base font-semibold text-foreground mb-1 sm:mb-2">
+              {t('salesInvoice.noInvoices')}
+            </h3>
+            <p className="text-xs sm:text-sm text-muted-foreground mb-4 sm:mb-6">
+              {t('salesInvoice.noInvoicesDesc')}
+            </p>
+            <Button onClick={handleAddInvoice} className="bg-emerald-600 hover:bg-emerald-700 text-xs sm:text-sm">
+              <FaPlus size={11} className="sm:size-12 mr-1" />
+              {t('salesInvoice.newInvoice')}
+            </Button>
           </div>
         ) : (
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse">
               <thead>
-                <tr style={{ borderBottom: '1px solid var(--color-border-light)' }}>
-                  {[t('salesInvoice.invoiceNumber'), t('salesInvoice.customer'), t('salesInvoice.date'), t('salesInvoice.items'), t('salesInvoice.total'), t('salesInvoice.paid'), t('salesInvoice.status'), t('common.actions')].map(h => (
-                    <th key={h} style={{ padding: '0.75rem 1rem', textAlign: 'start', fontSize: '0.75rem', fontWeight: 700, color: 'var(--color-text-muted)', whiteSpace: 'nowrap', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</th>
+                <tr className="border-b border-border">
+                  {[
+                    t('salesInvoice.invoiceNumber'),
+                    t('salesInvoice.customer'),
+                    t('salesInvoice.date'),
+                    t('salesInvoice.items'),
+                    t('salesInvoice.total'),
+                    t('salesInvoice.paid'),
+                    t('salesInvoice.status'),
+                    t('common.actions'),
+                  ].map((h) => (
+                    <th
+                      key={h}
+                      className="px-4 py-3 text-left text-xs font-bold text-muted-foreground whitespace-nowrap uppercase tracking-wider"
+                    >
+                      {h}
+                    </th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {invoices.map((invoice, index) => (
-                  <tr key={invoice.id || `invoice-${invoice.created_at}-${index}`} style={{ borderBottom: '1px solid var(--color-border-light)' }}
-                    onMouseEnter={e => e.currentTarget.style.background = 'var(--color-surface)'}
-                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                  <tr
+                    key={invoice.id || `invoice-${invoice.created_at}-${index}`}
+                    className="border-b border-border hover:bg-muted/50 transition-colors"
                   >
-                    <td style={{ padding: '1rem', fontWeight: 700, color: 'var(--color-text)', whiteSpace: 'nowrap' }}>#{invoice.id}</td>
-                    <td style={{ padding: '1rem' }}>
-                      <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--color-text)' }}>{invoice.customer_name}</div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '0.15rem' }}>{invoice.customer_phone}</div>
+                    <td className="px-4 py-4 font-bold text-foreground whitespace-nowrap">
+                      #{invoice.id}
                     </td>
-                    <td style={{ padding: '1rem', fontSize: '0.85rem', color: 'var(--color-text-muted)', whiteSpace: 'nowrap' }}>
-                      {new Date(invoice.created_at).toLocaleDateString(i18n.language === 'ar' ? 'ar-SA' : 'en-US')}
+                    <td className="px-4 py-4">
+                      <div className="font-semibold text-sm text-foreground">
+                        {invoice.customer_name}
+                      </div>
+                      <div className="text-xs text-muted-foreground mt-0.5">
+                        {invoice.customer_phone}
+                      </div>
                     </td>
-                    <td style={{ padding: '1rem' }}>
-                      <div style={{ fontSize: '0.8rem', maxWidth: 200 }}>
+                    <td className="px-4 py-4 text-sm text-muted-foreground whitespace-nowrap">
+                      {new Date(invoice.created_at).toLocaleDateString(
+                        i18n.language === 'ar' ? 'ar-SA' : 'en-US'
+                      )}
+                    </td>
+                    <td className="px-4 py-4">
+                      <div className="text-xs max-w-[200px]">
                         {invoice.items && invoice.items.length > 0 ? (
                           invoice.items.map((item, idx) => (
-                            <div key={item.id || `invoice-item-${invoice.id}-${idx}`} style={{ marginBottom: '0.2rem', padding: '0.35rem 0.6rem', background: 'var(--color-surface)', borderRadius: '8px', border: '1px solid var(--color-border-light)' }}>
-                              <div style={{ fontWeight: 600, fontSize: '0.8rem', color: 'var(--color-text)' }}>{item.item_name}</div>
-                              <div style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)' }}>
-                                {item.quantity}x {formatCurrency(item.selling_price)} · هامش: <span style={{ color: item.profit_margin >= 0 ? '#10b981' : '#ef4444', fontWeight: 600 }}>{item.profit_margin}%</span>
+                            <div
+                              key={item.id || `invoice-item-${invoice.id}-${idx}`}
+                              className="mb-1 px-2.5 py-1.5 bg-muted rounded-lg border border-border"
+                            >
+                              <div className="font-semibold text-xs text-foreground">
+                                {item.item_name}
+                              </div>
+                              <div className="text-xs text-muted-foreground">
+                                {item.quantity}x {formatCurrency(item.selling_price)} · هامش:{' '}
+                                <span className={cn('font-semibold', item.profit_margin >= 0 ? 'text-emerald-600' : 'text-red-600')}>
+                                  {item.profit_margin}%
+                                </span>
                               </div>
                             </div>
                           ))
                         ) : (
-                          <span style={{ color: 'var(--color-text-muted)' }}>-</span>
+                          <span className="text-muted-foreground">-</span>
                         )}
                       </div>
                     </td>
-                    <td style={{ padding: '1rem', fontWeight: 700, color: 'var(--color-text)', whiteSpace: 'nowrap' }}>{formatCurrency(invoice.total_amount)}</td>
-                    <td style={{ padding: '1rem', fontWeight: 600, color: '#10b981', whiteSpace: 'nowrap' }}>{formatCurrency(invoice.paid_amount)}</td>
-                    <td style={{ padding: '1rem' }}>
-                      <span style={{ padding: '0.3rem 0.75rem', borderRadius: '999px', fontSize: '0.75rem', fontWeight: 600, background: invoice.paid_amount >= invoice.total_amount ? '#10b98115' : '#f59e0b15', color: invoice.paid_amount >= invoice.total_amount ? '#10b981' : '#f59e0b' }}>
-                        {invoice.paid_amount >= invoice.total_amount ? t('salesInvoice.fullyPaid') : t('salesInvoice.partial')}
+                    <td className="px-4 py-4 font-bold text-foreground whitespace-nowrap">
+                      {formatCurrency(invoice.total_amount)}
+                    </td>
+                    <td className="px-4 py-4 font-semibold text-emerald-600 whitespace-nowrap">
+                      {formatCurrency(invoice.paid_amount)}
+                    </td>
+                    <td className="px-4 py-4">
+                      <span
+                        className={cn(
+                          'px-3 py-1.5 rounded-full text-xs font-semibold',
+                          invoice.paid_amount >= invoice.total_amount
+                            ? 'bg-emerald-500/10 text-emerald-600'
+                            : 'bg-amber-500/10 text-amber-600'
+                        )}
+                      >
+                        {invoice.paid_amount >= invoice.total_amount
+                          ? t('salesInvoice.fullyPaid')
+                          : t('salesInvoice.partial')}
                       </span>
                     </td>
-                    <td style={{ padding: '1rem' }}>
-                      <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'nowrap' }}>
-                        <button onClick={() => handleEditInvoice(invoice)} style={{ width: 30, height: 30, borderRadius: '8px', background: 'var(--color-surface)', color: 'var(--color-text-muted)', border: '1px solid var(--color-border-light)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem' }}>✏️</button>
-                        <button onClick={() => handleDeleteInvoice(invoice.id)} style={{ width: 30, height: 30, borderRadius: '8px', background: '#ef444412', color: '#ef4444', border: '1px solid #ef444430', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem' }}>🗑</button>
+                    <td className="px-4 py-4">
+                      <div className="flex gap-1 flex-nowrap">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => handlePrintInvoice(invoice)}
+                          title={t('common.print')}
+                        >
+                          <FaPrint size={13} />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => handleEditInvoice(invoice)}
+                        >
+                          <FaEdit size={13} />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                          onClick={() => handleDeleteInvoice(invoice.id)}
+                        >
+                          <FaPlus size={13} />
+                        </Button>
                       </div>
                     </td>
                   </tr>
@@ -293,123 +547,203 @@ const SalesInvoice = () => {
             </table>
           </div>
         )}
-      </div>
+      </ShadcnCard>
 
-      {/* ── Modal ── */}
-      {modalOpen && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '1rem' }}>
-          <div style={{ background: 'var(--color-card-background)', borderRadius: '20px', width: '100%', maxWidth: 700, maxHeight: '90vh', overflow: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,0.3)', border: '1px solid var(--color-border-light)' }}>
-            <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--color-border-light)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <div style={{ width: 40, height: 40, borderRadius: '12px', background: '#10b98118', color: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  {editingInvoice ? <FaEdit size={16} /> : <FaPlus size={16} />}
-                </div>
-                <h3 style={{ margin: 0, fontWeight: 700, fontSize: '1.1rem', color: 'var(--color-text)' }}>
-                  {editingInvoice ? t('salesInvoice.editInvoice') : t('salesInvoice.newInvoice')}
-                </h3>
+      {/* Modal */}
+      <Dialog open={modalOpen} onOpenChange={setModalOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600">
+                {editingInvoice ? <FaEdit size={16} /> : <FaPlus size={16} />}
               </div>
-              <button onClick={() => setModalOpen(false)} style={{ width: 36, height: 36, borderRadius: '10px', background: 'var(--color-surface)', color: 'var(--color-text-muted)', border: '1px solid var(--color-border-light)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' }}>✕</button>
+              <DialogTitle className="text-lg font-bold">
+                {editingInvoice ? t('salesInvoice.editInvoice') : t('salesInvoice.newInvoice')}
+              </DialogTitle>
+            </div>
+          </DialogHeader>
+
+          <div className="flex flex-col gap-4 pt-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs font-semibold text-muted-foreground mb-2 block">
+                  {t('salesInvoice.customerName')}
+                </label>
+                <input
+                  type="text"
+                  value={formData.customer_name}
+                  onChange={(e) => setFormData({ ...formData, customer_name: e.target.value })}
+                  placeholder={t('salesInvoice.customerNamePlaceholder')}
+                  className="w-full px-3.5 py-2.5 rounded-lg border border-border bg-muted text-sm"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-muted-foreground mb-2 block">
+                  {t('salesInvoice.customerPhone')}
+                </label>
+                <input
+                  type="text"
+                  value={formData.customer_phone}
+                  onChange={(e) => setFormData({ ...formData, customer_phone: e.target.value })}
+                  placeholder={t('salesInvoice.customerPhonePlaceholder')}
+                  className="w-full px-3.5 py-2.5 rounded-lg border border-border bg-muted text-sm"
+                />
+              </div>
             </div>
 
-            <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                <div>
-                  <label style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', fontWeight: 600, marginBottom: '0.35rem', display: 'block' }}>{t('salesInvoice.customerName')}</label>
-                  <input type="text" value={formData.customer_name} onChange={(e) => setFormData({ ...formData, customer_name: e.target.value })} placeholder={t('salesInvoice.customerNamePlaceholder')} style={{ width: '100%', padding: '0.6rem 0.9rem', borderRadius: '10px', border: '1px solid var(--color-border-light)', background: 'var(--color-surface)', fontSize: '0.875rem' }} />
-                </div>
-                <div>
-                  <label style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', fontWeight: 600, marginBottom: '0.35rem', display: 'block' }}>{t('salesInvoice.customerPhone')}</label>
-                  <input type="text" value={formData.customer_phone} onChange={(e) => setFormData({ ...formData, customer_phone: e.target.value })} placeholder={t('salesInvoice.customerPhonePlaceholder')} style={{ width: '100%', padding: '0.6rem 0.9rem', borderRadius: '10px', border: '1px solid var(--color-border-light)', background: 'var(--color-surface)', fontSize: '0.875rem' }} />
-                </div>
+            <div>
+              <div className="flex justify-between items-center mb-2">
+                <label className="text-xs font-semibold text-muted-foreground">
+                  {t('salesInvoice.items')}
+                </label>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => navigate('/items/new')}
+                  className="text-xs"
+                >
+                  <FaPlus size={10} className="mr-1" />
+                  {t('items.addNewItem')}
+                </Button>
               </div>
-
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                  <label style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', fontWeight: 600 }}>{t('salesInvoice.items')}</label>
-                  <button onClick={() => navigate('/items/new')} style={{ background: '#3b82f6', color: '#fff', border: 'none', padding: '0.35rem 0.75rem', borderRadius: '8px', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                    <FaPlus size={10} /> {t('items.addNewItem')}
-                  </button>
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                  {formData.items.map((item, index) => (
-                    <div key={item.item_id || `form-item-${index}`} style={{ padding: '1rem', background: 'var(--color-surface)', borderRadius: '14px', border: '1px solid var(--color-border-light)', position: 'relative' }}>
-                      {formData.items.length > 1 && (
-                        <button onClick={() => removeItem(index)} style={{ position: 'absolute', top: '0.6rem', right: '0.6rem', width: 26, height: 26, borderRadius: '8px', background: '#ef444412', color: '#ef4444', border: '1px solid #ef444430', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.85rem' }}>✕</button>
-                      )}
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '0.75rem' }}>
-                        <div>
-                          <label style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)', fontWeight: 600, marginBottom: '0.25rem', display: 'block' }}>{t('salesInvoice.item')}</label>
-                          <select value={item.item_id} onChange={(e) => updateItem(index, 'item_id', e.target.value)} style={{ width: '100%', padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid var(--color-border-light)', background: 'var(--color-card-background)', fontSize: '0.85rem' }}>
-                            <option value="">{t('salesInvoice.selectItem')}</option>
-                            {items.map(i => <option key={i.id} value={i.id}>{i.name}</option>)}
-                          </select>
-                        </div>
-                        <div>
-                          <label style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)', fontWeight: 600, marginBottom: '0.25rem', display: 'block' }}>{t('salesInvoice.quantity')}</label>
-                          <input type="number" value={item.quantity} onChange={(e) => updateItem(index, 'quantity', parseInt(e.target.value) || 1)} min="1" style={{ width: '100%', padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid var(--color-border-light)', background: 'var(--color-card-background)', fontSize: '0.85rem' }} />
-                        </div>
-                        <div>
-                          <label style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)', fontWeight: 600, marginBottom: '0.25rem', display: 'block' }}>{t('salesInvoice.costPrice')}</label>
-                          <input type="number" value={item.cost_price} onChange={(e) => updateItem(index, 'cost_price', parseFloat(e.target.value) || 0)} placeholder="0" style={{ width: '100%', padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid var(--color-border-light)', background: 'var(--color-card-background)', fontSize: '0.85rem' }} />
-                        </div>
-                        <div>
-                          <label style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)', fontWeight: 600, marginBottom: '0.25rem', display: 'block' }}>{t('salesInvoice.sellingPrice')}</label>
-                          <input type="number" value={item.selling_price} onChange={(e) => updateItem(index, 'selling_price', parseFloat(e.target.value) || 0)} placeholder="0" style={{ width: '100%', padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid var(--color-border-light)', background: 'var(--color-card-background)', fontSize: '0.85rem' }} />
-                        </div>
+              <div className="flex flex-col gap-3">
+                {formData.items.map((item, index) => (
+                  <div
+                    key={item.item_id || `form-item-${index}`}
+                    className="relative p-4 bg-muted rounded-xl border border-border"
+                  >
+                    {formData.items.length > 1 && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="absolute top-2 right-2 h-6 w-6 text-destructive hover:text-destructive hover:bg-destructive/10"
+                        onClick={() => removeItem(index)}
+                      >
+                        <FaTimes size={10} />
+                      </Button>
+                    )}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+                      <div>
+                        <label className="text-xs font-semibold text-muted-foreground mb-1.5 block">
+                          {t('salesInvoice.item')}
+                        </label>
+                        <select
+                          value={item.item_id}
+                          onChange={(e) => updateItem(index, 'item_id', e.target.value)}
+                          className="w-full px-3.5 py-2.5 rounded-lg border border-border bg-background text-sm cursor-pointer"
+                        >
+                          <option value="">اختر الصنف</option>
+                          {items.map((i) => (
+                            <option key={i.id} value={i.id}>
+                              {i.name}
+                            </option>
+                          ))}
+                        </select>
                       </div>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-                        <div>
-                          <label style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)', fontWeight: 600, marginBottom: '0.25rem', display: 'block' }}>{t('salesInvoice.profitMargin')}</label>
-                          <input type="text" value={`${item.profit_margin}%`} readOnly style={{ width: '100%', padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid var(--color-border-light)', background: 'var(--color-surface)', fontSize: '0.85rem', color: item.profit_margin >= 0 ? '#10b981' : '#ef4444', fontWeight: 600 }} />
-                        </div>
-                        <div>
-                          <label style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)', fontWeight: 600, marginBottom: '0.25rem', display: 'block' }}>{t('salesInvoice.itemTotal')}</label>
-                          <input type="text" value={formatCurrency(item.selling_price * item.quantity)} readOnly style={{ width: '100%', padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid var(--color-border-light)', background: 'var(--color-surface)', fontSize: '0.85rem', fontWeight: 600 }} />
-                        </div>
+                      <div>
+                        <label className="text-xs font-semibold text-muted-foreground mb-1.5 block">
+                          الكمية
+                        </label>
+                        <input
+                          type="number"
+                          value={item.quantity}
+                          onChange={(e) => updateItem(index, 'quantity', e.target.value)}
+                          min="1"
+                          className="w-full px-3.5 py-2.5 rounded-lg border border-border bg-muted text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold text-muted-foreground mb-1.5 block">
+                          سعر التكلفة
+                        </label>
+                        <input
+                          type="number"
+                          value={item.cost_price}
+                          onChange={(e) => updateItem(index, 'cost_price', e.target.value)}
+                          min="0"
+                          step="0.01"
+                          className="w-full px-3.5 py-2.5 rounded-lg border border-border bg-muted text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold text-muted-foreground mb-1.5 block">
+                          سعر البيع
+                        </label>
+                        <input
+                          type="number"
+                          value={item.selling_price}
+                          onChange={(e) => updateItem(index, 'selling_price', e.target.value)}
+                          min="0"
+                          step="0.01"
+                          className="w-full px-3.5 py-2.5 rounded-lg border border-border bg-muted text-sm"
+                        />
                       </div>
                     </div>
-                  ))}
-                  <button onClick={addItem} style={{ width: '100%', padding: '0.6rem 1rem', borderRadius: '10px', background: 'var(--color-surface)', color: 'var(--color-text-muted)', border: '1px dashed var(--color-border-light)', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
-                    <FaPlus size={11} /> {t('salesInvoice.addItem')}
-                  </button>
-                </div>
+                  </div>
+                ))}
               </div>
+              <Button
+                variant="outline"
+                onClick={addItem}
+                className="w-full border-dashed"
+              >
+                <FaPlus size={12} className="mr-2" />
+                إضافة صنف آخر
+              </Button>
+            </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                <div>
-                  <label style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', fontWeight: 600, marginBottom: '0.35rem', display: 'block' }}>{t('salesInvoice.totalAmount')}</label>
-                  <input type="number" value={formData.total_amount} onChange={(e) => setFormData({ ...formData, total_amount: parseFloat(e.target.value) || 0 })} placeholder="0" style={{ width: '100%', padding: '0.6rem 0.9rem', borderRadius: '10px', border: '1px solid var(--color-border-light)', background: 'var(--color-surface)', fontSize: '0.875rem' }} />
-                </div>
-                <div>
-                  <label style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', fontWeight: 600, marginBottom: '0.35rem', display: 'block' }}>{t('salesInvoice.paidAmount')}</label>
-                  <input type="number" value={formData.paid_amount} onChange={(e) => setFormData({ ...formData, paid_amount: parseFloat(e.target.value) || 0 })} placeholder="0" style={{ width: '100%', padding: '0.6rem 0.9rem', borderRadius: '10px', border: '1px solid var(--color-border-light)', background: 'var(--color-surface)', fontSize: '0.875rem' }} />
-                </div>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                <div>
-                  <label style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', fontWeight: 600, marginBottom: '0.35rem', display: 'block' }}>{t('salesInvoice.paymentMethod')}</label>
-                  <select value={formData.payment_method} onChange={(e) => setFormData({ ...formData, payment_method: e.target.value })} style={{ width: '100%', padding: '0.6rem 0.9rem', borderRadius: '10px', border: '1px solid var(--color-border-light)', background: 'var(--color-surface)', fontSize: '0.875rem' }}>
-                    <option value="cash">{t('salesInvoice.cash')}</option>
-                    <option value="card">{t('salesInvoice.card')}</option>
-                    <option value="credit">{t('salesInvoice.credit')}</option>
-                  </select>
-                </div>
-              </div>
-
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', fontWeight: 600, marginBottom: '0.35rem', display: 'block' }}>{t('salesInvoice.notes')}</label>
-                <textarea value={formData.notes} onChange={(e) => setFormData({ ...formData, notes: e.target.value })} placeholder={t('salesInvoice.notesPlaceholder')} rows={3} style={{ width: '100%', padding: '0.6rem 0.9rem', borderRadius: '10px', border: '1px solid var(--color-border-light)', background: 'var(--color-surface)', fontSize: '0.875rem', resize: 'vertical' }} />
+                <label className="text-xs font-semibold text-muted-foreground mb-2 block">
+                  طريقة الدفع
+                </label>
+                <select
+                  value={formData.payment_method}
+                  onChange={(e) => setFormData({ ...formData, payment_method: e.target.value })}
+                  className="w-full px-3.5 py-2.5 rounded-lg border border-border bg-muted text-sm cursor-pointer"
+                >
+                  <option value="cash">نقداً</option>
+                  <option value="installment">آجل</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-muted-foreground mb-2 block">
+                  ملاحظات
+                </label>
+                <input
+                  type="text"
+                  value={formData.notes}
+                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                  placeholder="ملاحظات اختيارية"
+                  className="w-full px-3.5 py-2.5 rounded-lg border border-border bg-muted text-sm"
+                />
               </div>
             </div>
 
-            <div style={{ padding: '1rem 1.5rem', borderTop: '1px solid var(--color-border-light)', display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
-              <button onClick={() => setModalOpen(false)} style={{ padding: '0.6rem 1.2rem', borderRadius: '10px', background: 'var(--color-surface)', color: 'var(--color-text-muted)', border: '1px solid var(--color-border-light)', cursor: 'pointer', fontWeight: 600, fontSize: '0.875rem' }}>{t('common.cancel')}</button>
-              <button onClick={handleSaveInvoice} style={{ padding: '0.6rem 1.4rem', borderRadius: '10px', background: '#10b981', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: '0.875rem' }}>{t('common.save')}</button>
+            <div className="p-4 bg-muted rounded-xl border border-border flex justify-between items-center">
+              <div>
+                <span className="text-xs font-semibold text-muted-foreground">
+                  الإجمالي:
+                </span>
+                <span className="text-xl font-bold ml-2 text-emerald-600">
+                  {formatCurrency(
+                    formData.items.reduce((sum, item) => sum + (item.selling_price * item.quantity), 0)
+                  )}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex gap-3 justify-end">
+              <Button variant="outline" onClick={() => setModalOpen(false)}>
+                {t('common.cancel')}
+              </Button>
+              <Button onClick={handleSaveInvoice} className="bg-emerald-600 hover:bg-emerald-700">
+                {t('common.save')}
+              </Button>
             </div>
           </div>
-        </div>
-      )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

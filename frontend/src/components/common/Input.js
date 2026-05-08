@@ -1,14 +1,25 @@
 import React from 'react';
+import { Input as UiInput } from '../ui/input';
 
-const Input = ({ type = 'text', placeholder, value, onChange, className = '', id, label, required = false, ...props }) => {
+const Input = ({
+  type = 'text',
+  placeholder,
+  value,
+  onChange,
+  className = '',
+  id,
+  label,
+  required = false,
+  ...props
+}) => {
   return (
-    <input
+    <UiInput
       type={type}
       id={id}
       placeholder={placeholder}
       value={value}
       onChange={onChange}
-      className={`input ${className}`}
+      className={className}
       aria-label={label || placeholder}
       aria-required={required}
       {...props}
