@@ -4,6 +4,31 @@ This is a complete inventory management system with React frontend and FastAPI b
 
 ## 🚀 Quick Start
 
+## 🛠️ Tech Stack
+
+### Backend
+- **FastAPI** - Modern Python web framework
+- **SQLAlchemy** - ORM for database operations
+- **Alembic** - Database migration tool
+- **Pydantic** - Data validation
+- **JWT** - Authentication tokens
+- **SQLite** - Database
+
+### Frontend
+- **React 19** - UI library
+- **Tailwind CSS** - Utility-first CSS framework
+- **shadcn/ui** - High-quality UI components
+- **React Router** - Client-side routing
+- **i18next** - Internationalization (Arabic/English)
+- **xlsx** - Excel export functionality
+- **Recharts** - Data visualization
+- **React Icons** - Icon library
+
+### Infrastructure
+- **Docker** - Containerization
+- **nginx** - Web server and reverse proxy
+- **Supervisor** - Process manager
+
 ### Backend Setup
 ```bash
 cd backend
@@ -127,6 +152,16 @@ docker-compose ps
 - `GET /payments/summary/debt` - Total debt
 - `GET /payments/summary/paid` - Total paid
 
+### Installment Sales
+- `GET /installment-sales/` - List installment plans
+- `POST /installment-sales/` - Create installment plan
+- `GET /installment-sales/{id}` - Get specific plan
+- `PUT /installment-sales/{id}` - Update plan
+- `DELETE /installment-sales/{id}` - Delete plan
+- `POST /installment-sales/{id}/payments` - Add payment to plan
+- `GET /installment-sales/{id}/payments` - Get plan payments
+- `POST /installment-sales/{id}/payments/export` - Export payment history to Excel
+
 ### Barcode Scanning
 - `POST /scanning/scan` - Scan barcode (requires auth)
 
@@ -141,11 +176,64 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = 30
 ```
 
-### Frontend Configuration
-Update `frontend/src/services/apiService.js`:
-```javascript
-const API_BASE_URL = 'http://localhost:8000'; // Change for production
+### Frontend API Configuration
+
+The frontend automatically detects the environment and configures the API base URL:
+
+- **Docker/Production**: Uses relative paths (empty string) - API requests go through nginx proxy
+- **Local Development**: Uses `http://localhost:8000` - direct backend access
+
+To override this behavior, set the environment variable:
+
+```bash
+# For local development (if needed)
+cd frontend
+set REACT_APP_API_BASE_URL=http://localhost:8000
+npm start
+
+# For custom backend URL
+set REACT_APP_API_BASE_URL=http://your-backend-url:8000
+npm start
 ```
+
+**Setting NODE_ENV:**
+
+The `NODE_ENV` environment variable controls the build mode:
+
+**Windows:**
+```bash
+# PowerShell
+set NODE_ENV=production
+npm start
+
+# CMD
+set NODE_ENV=production
+npm start
+
+# Or inline
+$env:NODE_ENV="production"; npm start
+```
+
+**Linux/Mac:**
+```bash
+export NODE_ENV=production
+npm start
+
+# Or inline
+NODE_ENV=production npm start
+```
+
+**In Docker (docker-compose.yml):**
+```yaml
+services:
+  app:
+    environment:
+      - NODE_ENV=production
+```
+
+**How it works:**
+- Docker: Frontend and backend run in same container, nginx proxies API requests internally (NODE_ENV=production)
+- Local: Frontend (port 3000) connects directly to backend (port 8000) (NODE_ENV=development)
 
 ## 🎯 Features Implemented
 
@@ -156,17 +244,41 @@ const API_BASE_URL = 'http://localhost:8000'; // Change for production
 - ✅ Automatic low-stock alerts
 - ✅ Financial tracking (debt/paid)
 - ✅ Barcode scanning integration
+- ✅ Installment sales management
+- ✅ Payment history tracking
 - ✅ Comprehensive API documentation
 - ✅ 79 passing unit tests
 
 ### Frontend Features
-- ✅ Modern React interface
-- ✅ API integration service
-- ✅ Dashboard with real-time stats
-- ✅ Items management with filtering
+- ✅ Modern React 19 interface with hooks
+- ✅ API integration service with error handling
+- ✅ Dashboard with real-time stats and charts
+- ✅ Items management with filtering and search
 - ✅ Authentication (login/register)
-- ✅ Responsive design
-- ✅ Arabic/RTL support ready
+- ✅ Responsive design with Tailwind CSS
+- ✅ Arabic/RTL support with i18n
+- ✅ Professional print functionality for all pages
+- ✅ Excel export with xlsx library for reports
+- ✅ shadcn/ui components for consistent design
+- ✅ Stock tracking with tabbed interface
+- ✅ Installment plan management and tracking
+- ✅ Payment receipts and CSV/Excel export
+- ✅ Gradient-styled headers and buttons
+- ✅ Professional table designs
+
+### Print Features
+- ✅ Print for all major pages (Dashboard, Items, Categories, Stock, Purchases, Sales, Installments)
+- ✅ Professional print layouts with Arabic font support
+- ✅ Compact single-page printouts for installment plans
+- ✅ Receipt-style print formats
+- ✅ Print-friendly CSS with proper page sizing
+
+### Export Features
+- ✅ Excel export with professional styling (xlsx library)
+- ✅ Multi-sheet Excel reports (Summary, Payments, Schedule)
+- ✅ Color-coded payment status
+- ✅ Complete payment history export
+- ✅ CSV export with BOM for Excel compatibility
 
 ## 🧪 Testing
 
@@ -269,6 +381,8 @@ The system uses SQLite with the following tables:
 - `stock_movements` - Stock change history
 - `alerts` - System alerts
 - `payments` - Financial transactions
+- `installment_sales` - Installment plan records
+- `installment_payments` - Installment payment history
 
 ## 🐛 Troubleshooting
 

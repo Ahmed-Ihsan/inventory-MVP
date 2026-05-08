@@ -40,7 +40,7 @@ const INITIAL_VALUES = {
 };
 
 const InstallmentSales = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { addToast } = useToast();
   const [items, setItems] = useState([]);
