@@ -92,3 +92,6 @@ docs/
 
 # Netlify
 .netlify/
+
+# Skills folder
+skills/
