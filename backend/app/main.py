@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 from .database import engine
 from .models import (
     user,
@@ -64,7 +65,13 @@ app.include_router(
     notifications.router, prefix="/notifications", tags=["notifications"]
 )
 
+# Serve React static files
+try:
+    app.mount("/", StaticFiles(directory="build", html=True), name="static")
+except Exception:
+    pass  # Build folder may not exist in development
 
-@app.get("/")
+
+@app.get("/api")
 def read_root():
     return {"message": "Welcome to Inventory Management API"}

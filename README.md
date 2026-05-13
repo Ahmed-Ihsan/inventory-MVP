@@ -372,7 +372,115 @@ npm run build
 # Serve build folder with nginx/apache
 ```
 
-## 📊 Database Schema
+## 📦 Standalone Executable Builds
+
+The recommended approach is a **single combined EXE** that includes both the FastAPI backend and React frontend. This is simpler, smaller, and has no CORS issues.
+
+### Combined Backend + Frontend EXE (Recommended)
+
+**Prerequisites:**
+- Python 3.8+ with virtual environment
+- All backend dependencies installed (`pip install -r requirements.txt`)
+- React build created (`cd frontend && npm run build`)
+
+**Build Steps:**
+```bash
+# 1. Build React frontend
+cd frontend
+npm run build
+
+# 2. Copy build folder to backend
+xcopy build ..\backend\build /E /I /Y  # Windows
+# or
+cp -r build ../backend/build  # Linux/Mac
+
+# 3. Build combined EXE
+cd ../backend
+.\venv\Scripts\activate
+pip install pyinstaller
+pyinstaller inventory_backend.spec
+```
+
+**Output:**
+- `backend/dist/inventory_backend/` folder containing:
+  - `inventory_backend.exe` (~8.5 MB)
+  - `_internal/` folder with all dependencies
+  - `build/` folder with React frontend
+
+**Running the EXE:**
+```bash
+.\dist\inventory_backend\inventory_backend.exe
+```
+- Automatically creates `inventory.db` in the same folder
+- Serves React frontend at `http://0.0.0.0:8000/`
+- Serves API at `http://0.0.0.0:8000/api`
+- No Python or Node.js installation required
+
+**Distribution:**
+- Copy the entire `dist/inventory_backend/` folder to any Windows machine
+- No dependencies needed
+- Single EXE handles both frontend and backend
+
+**Rebuilding after code changes:**
+```bash
+# Frontend changes
+cd frontend
+npm run build
+xcopy build ..\backend\build /E /I /Y
+
+# Backend changes
+cd ../backend
+pyinstaller --clean inventory_backend.spec
+```
+
+**Files Created:**
+- `backend/run_exe.py` - Entry point with Windows multiprocessing fix
+- `backend/inventory_backend.spec` - PyInstaller configuration with all hidden imports and build folder
+- `backend/app/main.py` - Updated to serve React static files
+
+**Important:** The React build must use absolute paths (not relative) to avoid chunk loading errors when accessing the app via IP address. Ensure `frontend/package.json` does NOT have `"homepage": "."` set. The build should use default absolute paths starting with `/`.
+
+**Note:** This approach bundles everything into one EXE. The React app is served directly by FastAPI, eliminating CORS issues and reducing deployment complexity.
+
+---
+
+### Backend EXE Only (API Only)
+
+If you only need the API backend without the frontend:
+
+**Build Steps:**
+```bash
+cd backend
+.\venv\Scripts\activate
+pip install pyinstaller
+pyinstaller inventory_backend.spec
+```
+
+**Output:** `backend/dist/inventory_backend/inventory_backend.exe` (~8.5 MB)
+
+---
+
+### Frontend EXE (Electron - Alternative)
+
+**Note:** The combined EXE approach above is recommended. Use Electron only if you need a native desktop window with specific Electron features.
+
+**Build Steps:**
+```bash
+cd frontend
+npm install --save-dev electron electron-builder
+npm run build
+npx electron-builder
+```
+
+**Output:** `frontend/dist/Inventory Management Setup 0.1.0.exe` (~142 MB)
+
+**Issues:**
+- Requires Node.js for building
+- Larger file size
+- More complex deployment
+- Requires custom protocol or HTTP server for React paths
+
+## �📊 Database Schema
 
 The system uses SQLite with the following tables:
 - `users` - User authentication
